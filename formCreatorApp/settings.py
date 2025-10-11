@@ -11,20 +11,27 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-import environ
+import mongoengine
+import os  # Asegúrate de importar os
 
-env = environ.Env()
-environ.Env.read_env()  # Carga variables de .env
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
 
 DATABASES = {
     'default': {
-        'ENGINE': 'djongo',
-        'NAME': env.db('DATABASE_URL')['NAME'],
-        'CLIENT': {
-            'host': env('DATABASE_URL'),
-        }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+mongoengine.connect(
+    db='sanguino_db',
+    host='mongodb+srv://sanguino_db_user:ayd2025pilar@cluster0.msafxpe.mongodb.net/sanguino_db?retryWrites=true&w=majority',
+    alias='default'
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
