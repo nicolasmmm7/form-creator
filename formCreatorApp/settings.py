@@ -11,6 +11,20 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import environ
+
+env = environ.Env()
+environ.Env.read_env()  # Carga variables de .env
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'djongo',
+        'NAME': env.db('DATABASE_URL')['NAME'],
+        'CLIENT': {
+            'host': env('DATABASE_URL'),
+        }
+    }
+}
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
