@@ -11,10 +11,9 @@ class EmpresaSerializer(serializers.Serializer):
 
 
 class PerfilSerializer(serializers.Serializer):
-    avatar_url = serializers.CharField(required=False)
-    idioma = serializers.CharField(required=False)
-    timezone = serializers.CharField(required=False)
-
+    avatar_url = serializers.CharField(required=False, allow_blank=True)
+    idioma = serializers.CharField(required=False, allow_blank=True)
+    timezone = serializers.CharField(required=False, allow_blank=True)
 
 class UsuarioSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
