@@ -131,3 +131,45 @@ class FormularioSerializer(serializers.Serializer):
 
         formulario.save()
         return formulario
+    
+    def update(self, instance, validated_data):
+        # Actualizar los campos simples
+        instance.titulo = validated_data.get('titulo', instance.titulo)
+        instance.descripcion = validated_data.get('descripcion', instance.descripcion)
+
+        # --- Actualizar configuración ---
+        config_data = validated_data.get('configuracion')
+        if config_data:
+            if instance.configuracion:
+                # Actualizar campos de configuración existentes
+                for key, value in config_data.items():
+                    setattr(instance.configuracion, key, value)
+            else:
+                instance.configuracion = ConfiguracionFormulario(**config_data)
+
+        # --- Actualizar preguntas ---
+        preguntas_data = validated_data.get('preguntas')
+        if preguntas_data is not None:
+            nuevas_preguntas = []
+            for p in preguntas_data:
+                opciones = [Opcion(**opt) for opt in p.get('opciones', [])]
+                validaciones = (
+                    Validaciones(**p['validaciones'])
+                    if p.get('validaciones')
+                    else None
+                )
+                nuevas_preguntas.append(
+                    Pregunta(
+                        id=p['id'],
+                        tipo=p['tipo'],
+                        enunciado=p['enunciado'],
+                        obligatorio=p.get('obligatorio', False),
+                        opciones=opciones,
+                        validaciones=validaciones,
+                        posicion=p.get('posicion', None)
+                    )
+                )
+            instance.preguntas = nuevas_preguntas
+
+        instance.save()
+        return instance
