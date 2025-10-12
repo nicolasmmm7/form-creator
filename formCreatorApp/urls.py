@@ -19,5 +19,4 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('mongo-admin/', include('django_mongoengine.mongo_admin.urls')),
 ]
