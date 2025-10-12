@@ -88,7 +88,7 @@ DATABASES = {
 
 mongoengine.connect(
     db='sanguino_db',
-    host='mongodb+srv://sanguino_db_user:ayd2025pilar@cluster0.msafxpe.mongodb.net/sanguino_db?retryWrites=true&w=majority',
+    host='mongodb+srv://juansebastiansari_db_user:AI3v3cYI1ohzxnkp@papucreator.zbmpbf6.mongodb.net/',
     alias='default'
 )
 
