@@ -4,7 +4,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 // ⚙️ Configura tu proyecto con tus datos de Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyDM4I0IFuMlliDjukxyi3jTOycc8Qcy5Og",
+  apiKey: "process.env.REACT_APP_API_KEY",
   authDomain: "formcreator-87594.firebaseapp.com",
   projectId: "formcreator-87594",
   storageBucket: "formcreator-87594.firebasestorage.app",
@@ -27,6 +27,7 @@ export const loginWithGoogle = async () => {
   } catch (error) {
     console.error("❌ Error al iniciar sesión con Google:", error.message);
   }
+
 };
 
 // Exportar auth y provider por si los necesitas luego
