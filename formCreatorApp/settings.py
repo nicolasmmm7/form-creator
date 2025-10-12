@@ -87,7 +87,7 @@ DATABASES = {
 # -------------------------------
 
 mongoengine.connect(
-    db='sanguino_db',
+    db='formcreator',
     host='mongodb+srv://juansebastiansari_db_user:AI3v3cYI1ohzxnkp@papucreator.zbmpbf6.mongodb.net/',
     alias='default'
 )
