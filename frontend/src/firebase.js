@@ -4,7 +4,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 // ⚙️ Configura tu proyecto con tus datos de Firebase
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_API_KEY,
+  apiKey: "AIzaSyDM4I0IFuMlliDjukxyi3jTOycc8Qcy5Og",
   authDomain: "formcreator-87594.firebaseapp.com",
   projectId: "formcreator-87594",
   storageBucket: "formcreator-87594.firebasestorage.app",
