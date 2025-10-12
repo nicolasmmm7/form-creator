@@ -1,20 +1,33 @@
 # responseapp/models.py
 from datetime import datetime
-from mongoengine import Document, ReferenceField, DateTimeField, ListField, EmbeddedDocument, EmbeddedDocumentField, StringField, IntField
+from mongoengine import Document, ReferenceField, DateTimeField, ListField, EmbeddedDocument, EmbeddedDocumentField, StringField, IntField, LongField
 
 class RespuestaPregunta(EmbeddedDocument):
-    texto_pregunta = StringField(required=True)  # Enunciado original de la pregunta
+    preguntaid = IntField(required=True)
     tipo = StringField(required=True, choices=('texto_libre', 'opcion_multiple', 'escala_numerica'))
-    respuesta_texto = StringField()       # Respuesta para tipo texto
-    opcion_seleccionada = StringField()   # Opción elegida para tipo opción múltiple
-    respuesta_numerica = IntField()       # Valor numérico para tipo escala
+    valor = ListField(StringField())  # Puede contener textos u opciones
+
+class Respondedor(Document):
+    ipaddress = StringField(required=True)
+    googleid = LongField()
+    email = StringField()
+    nombre = StringField()
+    fotoperfil = StringField()
+    fecharegistro = DateTimeField()
+    ultimologin = DateTimeField()
+    
+    meta = {
+        'collection': 'respondedor'
+    }
 
 class RespuestaFormulario(Document):
     formulario = ReferenceField('Formulario', required=True)
-    respondiente = ReferenceField('Usuario', required=True)
+    respondedor = ReferenceField('Respondedor', required=True)
+    fechaenvio = DateTimeField(required=True)
+    tiempocompletacion = LongField()
     respuestas = ListField(EmbeddedDocumentField(RespuestaPregunta), required=True)
-    fecha_envio = DateTimeField(default=datetime.utcnow)
 
     meta = {
-        'collection': 'respuesta'
+        'collection': 'respuestasFormularios'
     }
+
