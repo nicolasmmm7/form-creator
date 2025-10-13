@@ -5,6 +5,12 @@ from rest_framework import status
 from usuarioapp.models import Usuario
 from usuarioapp.serializers import UsuarioSerializer
 from bson import ObjectId
+from django.http import HttpResponse
+from django.shortcuts import render
+
+# Hello World
+def hello(request):
+    return HttpResponse("<h1>Hello World</h1>")
 
 
 class UsuarioListCreateAPI(APIView):
