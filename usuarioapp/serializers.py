@@ -29,7 +29,8 @@ class UsuarioSerializer(serializers.Serializer):
         perfil_data = validated_data.pop('perfil', None)
 
         usuario = Usuario(**validated_data)
-        usuario.fecha_registro = datetime.utcnow()
+        # reparar utcnow() viendo que ya no sirve
+        usuario.fecha_registro = datetime.now()
 
         if empresa_data:
             usuario.empresa = Empresa(**empresa_data)
