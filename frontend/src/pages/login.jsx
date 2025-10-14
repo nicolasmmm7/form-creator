@@ -1,16 +1,26 @@
 import React, { useState } from "react";
 import { loginWithGoogle } from "../firebase";
 import { useNavigate, Link } from "react-router-dom";
+import { loginUsuario } from "../api";
 
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Login con email:", email, password);
-  };
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const result = await loginUsuario(email, password);
+
+  if (result.ok) {
+    alert(`✅ Bienvenido ${result.data.usuario.nombre}`);
+    console.log("Usuario logueado:", result.data.usuario);
+    navigate("/dashboard"); // Redirige al home
+  } else {
+    alert("❌ Error: " + (result.data.error || "Credenciales incorrectas"));
+  }
+};
 
   const handleGoogleLogin = async () => {
     const user = await loginWithGoogle();

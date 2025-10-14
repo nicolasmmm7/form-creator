@@ -58,3 +58,18 @@ class FormularioDetailAPI(APIView):
             return Response({"error": "Formulario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
         formulario.delete()
         return Response({"message": "Formulario eliminado"}, status=status.HTTP_204_NO_CONTENT)
+
+
+#traer formularios por administrador
+class FormularioListCreateAPI(APIView):
+    """GET: listar formularios
+       POST: crear nuevo formulario"""
+
+    def get(self, request):
+        admin_id = request.GET.get("admin")  # ?admin=<id_usuario>
+        if admin_id:
+            formularios = Formulario.objects(administrador=admin_id)
+        else:
+            formularios = Formulario.objects()
+        serializer = FormularioSerializer(formularios, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

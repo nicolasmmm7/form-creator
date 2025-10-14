@@ -47,9 +47,54 @@ const Register = () => {
 
 
   const handleGoogleRegister = async () => {
-    const user = await loginWithGoogle();
-    if (user) navigate("/dashboard");
-  };
+  try {
+    const result = await loginWithGoogle();
+
+    // 👇 Verificación de seguridad
+    if (!result || !result.user) {
+      console.error("No se obtuvo usuario de Firebase:", result);
+      alert("Error: no se pudo autenticar con Google.");
+      return;
+    }
+
+    const user = result.user; // ✅ Aquí ya está garantizado que existe
+
+    const nuevoUsuario = {
+      nombre: user.displayName || "Usuario sin nombre",
+      email: user.email,
+      clave_hash: user.uid, // usar uid como clave temporal
+      perfil: {
+        avatar_url: user.photoURL,
+        idioma: "es",
+        timezone: "America/Bogota",
+      },
+      empresa: { nombre: "sin_empresa" },
+    };
+
+    const response = await fetch("http://127.0.0.1:8000/api/usuarios/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(nuevoUsuario),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      alert(`✅ Bienvenido ${user.displayName || "usuario"}!`);
+      console.log("Usuario creado desde Google:", data);
+      // Si quieres redirigir
+      // navigate("/dashboard");
+    } else {
+      const errorData = await response.json();
+      console.error("❌ Error del backend:", errorData);
+      alert("Hubo un problema al registrar con Google");
+    }
+  } catch (error) {
+    console.error("❌ Error en login con Google:", error);
+    alert("Error al iniciar sesión con Google");
+  }
+};
+
+
 
   return (
     <main>
