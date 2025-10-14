@@ -22,7 +22,7 @@ class Usuario(Document):
     nombre = StringField(required=True)
     email = EmailField(required=True, unique=True)
     clave_hash = StringField(required=True)
-    fecha_registro = DateTimeField(default=datetime.utcnow)
+    fecha_registro = DateTimeField(default=datetime.now)
     empresa = EmbeddedDocumentField(Empresa)
     perfil = EmbeddedDocumentField(Perfil)
     
