@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { loginWithGoogle } from "../firebase";
 import { useNavigate, Link } from "react-router-dom";
+import { registrarUsuario } from "../api";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -16,10 +17,34 @@ const Register = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Datos de registro:", formData);
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const nuevoUsuario = {
+    nombre: formData.nombre + " " + formData.apellido,
+    email: formData.correo,
+    clave_hash: formData.password,
+    empresa: { nombre: "sin_empresa" },
+    perfil: { idioma: "es", timezone: "America/Bogota" }
   };
+
+  try {
+    const data = await registrarUsuario(nuevoUsuario);
+
+    if (data.id) {
+      alert(`✅ Usuario creado con ID: ${data.id}`);
+      console.log("Usuario creado:", data);
+    } else {
+      console.error("❌ Error del backend:", data);
+      alert("Error al registrar usuario. Revisa la consola.");
+    }
+  } catch (error) {
+    console.error("❌ Error de conexión:", error);
+    alert("No se pudo conectar con el servidor.");
+  }
+};
+
+
 
   const handleGoogleRegister = async () => {
     const user = await loginWithGoogle();
