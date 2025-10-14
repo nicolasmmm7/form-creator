@@ -14,7 +14,7 @@ const Login = () => {
 
   const handleGoogleLogin = async () => {
     const user = await loginWithGoogle();
-    if (user) navigate("/dashboard"); // redirige si el login fue exitoso
+    if (user) navigate("/home"); // redirige si el login fue exitoso
   };
 
   return (

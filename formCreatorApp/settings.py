@@ -124,4 +124,6 @@ USE_TZ = True
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOWED_ORIGINS = []
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000" #se coloca el puerto donde corre el frontend (es para darle permiso de perdirle cosas al backend) - Angely
+]

@@ -23,7 +23,7 @@ const Register = () => {
 
   const handleGoogleRegister = async () => {
     const user = await loginWithGoogle();
-    if (user) navigate("/dashboard");
+    if (user) navigate("/home");
   };
 
   return (
