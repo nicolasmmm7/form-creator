@@ -18,16 +18,16 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// ✅ Función de login con Google
+// firebase.js
 export const loginWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, provider);
     console.log("✅ Usuario autenticado:", result.user);
-    return result.user;
+    return result; // 👈 devolvemos el objeto completo
   } catch (error) {
     console.error("❌ Error al iniciar sesión con Google:", error.message);
+    return null;
   }
-
 };
 
 // Exportar auth y provider por si los necesitas luego

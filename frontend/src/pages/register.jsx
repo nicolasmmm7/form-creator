@@ -3,6 +3,7 @@ import { loginWithGoogle } from "../firebase";
 import { useNavigate, Link } from "react-router-dom";
 import { registrarUsuario } from "../api";
 
+
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
