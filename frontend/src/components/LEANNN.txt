@@ -1,0 +1,3 @@
+aquí en component se hacen con .js y ayudan a darle funcionalidades a ciertos botones y demás, por ejemplo, 
+la primera que ando mirando es la función de que cuando le den al botón "registrar" esos datos sean enviados a la base
+ de datos y validades para cuando vuelva a iniciar sesión 
