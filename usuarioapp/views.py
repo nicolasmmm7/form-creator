@@ -68,3 +68,23 @@ class UsuarioDetailAPI(APIView):
 
 
 # Create your views here.
+
+class UsuarioLoginAPI(APIView):
+    """POST: autenticar usuario con email y clave_hash"""
+
+    def post(self, request):
+        email = request.data.get("email")
+        clave = request.data.get("clave_hash")
+
+        if not email or not clave:
+            return Response({"error": "Email y clave son requeridos"}, status=status.HTTP_400_BAD_REQUEST)
+
+        usuario = Usuario.objects(email=email, clave_hash=clave).first()
+        if not usuario:
+            return Response({"error": "Credenciales incorrectas"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = UsuarioSerializer(usuario)
+        return Response({
+            "message": "Inicio de sesión exitoso",
+            "usuario": serializer.data
+        }, status=status.HTTP_200_OK)
