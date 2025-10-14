@@ -1,3 +1,4 @@
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 """
 URL configuration for formCreatorApp project.
 
@@ -25,3 +26,4 @@ urlpatterns = [
     path('api/usuarios/', include('usuarioapp.urls')),
     path('api/formularios/', include('formapp.urls')),  
 ]
+
