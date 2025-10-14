@@ -35,6 +35,7 @@ class UsuarioSerializer(serializers.Serializer):
         if empresa_data:
             usuario.empresa = Empresa(**empresa_data)
         if perfil_data:
+            
             usuario.perfil = Perfil(**perfil_data)
 
         usuario.save()
