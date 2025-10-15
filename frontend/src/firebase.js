@@ -21,65 +21,20 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// Configuración adicional del provider de Google
-provider.setCustomParameters({
-  prompt: 'select_account'  // Forzar selección de cuenta cada vez
-});
-
-/**
- * Función para iniciar sesión con Google
- * 
- * ¿Qué hace?
- * 1. Abre popup de Google para seleccionar cuenta
- * 2. Usuario autoriza la aplicación
- * 3. Firebase devuelve objeto user con datos
- * 4. Genera un ID Token JWT para verificar en backend
- * 5. Retorna user y idToken para sincronizar con MongoDB
- * 
- * @returns {Promise<{user: Object, idToken: string}>}
- */
+// ✅ Función de login con Google
 export const loginWithGoogle = async () => {
   try {
     console.log("🔵 Iniciando autenticación con Google...");
     
     // Abrir popup de Google OAuth
     const result = await signInWithPopup(auth, provider);
-    const user = result.user;
-    
-    // ===============================================
-    // OBTENER ID TOKEN (CRÍTICO)
-    // ===============================================
-    // Este token es un JWT que contiene:
-    // - uid: ID único del usuario en Firebase
-    // - email: Email verificado por Google
-    // - exp: Timestamp de expiración (1 hora)
-    // - Firma digital para verificar autenticidad
-    const idToken = await user.getIdToken();
-    
-    console.log("✅ Usuario autenticado:", {
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName
-    });
-    
-    console.log("🔑 ID Token obtenido (primeros 50 chars):", idToken.substring(0, 50) + "...");
-    
-    // Retornar datos para el componente
-    return { user, idToken };
-    
+    console.log("✅ Usuario autenticado:", result.user);
+    return result.user;
   } catch (error) {
-    console.error("❌ Error al iniciar sesión con Google:", error);
-    
-    // Manejar errores específicos
-    if (error.code === 'auth/popup-closed-by-user') {
-      throw new Error('Popup cerrado. Por favor intenta nuevamente.');
-    } else if (error.code === 'auth/cancelled-popup-request') {
-      throw new Error('Operación cancelada.');
-    } else {
-      throw new Error(`Error: ${error.message}`);
-    }
+    console.error("❌ Error al iniciar sesión con Google:", error.message);
   }
+
 };
 
-// Exportar para usar en otros archivos
+// Exportar auth y provider por si los necesitas luego
 export { auth, provider };

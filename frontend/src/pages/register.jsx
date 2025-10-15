@@ -4,6 +4,7 @@ import { loginWithGoogle } from "../firebase";
 import { useNavigate, Link } from "react-router-dom";
 import { registrarUsuario, syncFirebaseUser } from "../api/usuario.api";
 
+
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
