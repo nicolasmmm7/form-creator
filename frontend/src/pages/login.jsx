@@ -18,25 +18,29 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const result = await loginUsuario(email, password);
+  const result = await loginUsuario(email, password);
 
-      if (result.ok) {
-        alert(`✅ Bienvenido ${result.data.usuario.nombre}`);
-        console.log("Usuario logueado:", result.data.usuario);
-        
-        // Guardar datos en localStorage
-        localStorage.setItem('user', JSON.stringify(result.data.usuario));
-        
-        navigate("/home");
-      } else {
-        alert("❌ Error: " + (result.data.error || "Credenciales incorrectas"));
-      }
-    } catch (error) {
-      console.error("Error en login:", error);
-      alert("Error de conexión: " + error.message);
-    } finally {
-      setLoading(false);
-    }
+  if (result.ok) {
+    // Detectar si los datos vienen dentro de "usuario" o no
+    const user = result.data.usuario || result.data;
+
+    alert(`✅ Bienvenido ${user.nombre || "Usuario"}`);
+    console.log("Usuario logueado:", user);
+
+    // Guardar en localStorage
+    localStorage.setItem('user', JSON.stringify(user));
+
+    // Redirigir
+    navigate("/home");
+  } else {
+    alert("❌ Error: " + (result.data.error || "Credenciales incorrectas"));
+  }
+} catch (error) {
+  console.error("Error en login:", error);
+  alert("Error de conexión: " + error.message);
+} finally {
+  setLoading(false);
+}
   };
 
   /**
