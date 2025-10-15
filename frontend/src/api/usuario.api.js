@@ -64,39 +64,21 @@ export const syncFirebaseUser = async (user, idToken) => {
 
 /**
  * Función para login tradicional (email/password)
- * 
- * @param {string} email - Email del usuario
- * @param {string} password - Contraseña del usuario
- * @returns {Promise<Object>} - Datos del usuario y token
+ *
  */
 export const loginUsuario = async (email, password) => {
-  console.log("🔵 loginUsuario: Intentando login tradicional...");
-
   try {
-    const response = await fetch(`${API_URL}/usuarios/login/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: email,
-        clave_hash: password
-      })
+    const response = await fetch('${API_URL}/usuarios/login/', {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, clave_hash: password }),
     });
 
     const data = await response.json();
-
-    if (!response.ok) {
-      console.error("❌ Error en login:", data);
-      return { ok: false, data };
-    }
-
-    console.log("✅ Login exitoso:", data);
-    return { ok: true, data };
-
+    return { ok: response.ok, data };
   } catch (error) {
-    console.error("❌ Error de conexión:", error);
-    throw error;
+    console.error("❌ Error al iniciar sesión:", error);
+    return { ok: false, data: { error: "Error de conexión con el servidor" } };
   }
 };
 

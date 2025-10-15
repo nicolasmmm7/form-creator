@@ -292,35 +292,24 @@ class UsuarioListCreateAPI(APIView):
 # ENDPOINT: Login tradicional (email/password)
 # ==========================================
 class UsuarioLoginAPI(APIView):
-    permission_classes = [AllowAny]
-    
+    """POST: autenticar usuario con email y clave_hash"""
+
     def post(self, request):
-        """Autenticar usuario con email y contraseña (método tradicional)"""
         email = request.data.get("email")
         clave = request.data.get("clave_hash")
 
         if not email or not clave:
-            return Response(
-                {"error": "Email y clave son requeridos"}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Email y clave son requeridos"}, status=status.HTTP_400_BAD_REQUEST)
 
         usuario = Usuario.objects(email=email, clave_hash=clave).first()
         if not usuario:
-            return Response(
-                {"error": "Credenciales incorrectas"}, 
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+            return Response({"error": "Credenciales incorrectas"}, status=status.HTTP_401_UNAUTHORIZED)
 
         serializer = UsuarioSerializer(usuario)
         return Response({
-            "ok": True,
             "message": "Inicio de sesión exitoso",
-            "data": {
-                "usuario": serializer.data
-            }
+            "usuario": serializer.data
         }, status=status.HTTP_200_OK)
-
 
 # ==========================================
 # ENDPOINT: Detalle de usuario (GET/PUT/DELETE)

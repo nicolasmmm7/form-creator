@@ -1,4 +1,6 @@
 // src/pages/Login.jsx
+
+//login tradicional
 import React, { useState } from "react";
 import { loginWithGoogle } from "../firebase";
 import { useNavigate, Link } from "react-router-dom";
@@ -10,38 +12,20 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  /**
-   * Maneja el login tradicional (email/password)
-   */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
 
-    try {
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
   const result = await loginUsuario(email, password);
 
   if (result.ok) {
-    // Detectar si los datos vienen dentro de "usuario" o no
-    const user = result.data.usuario || result.data;
-
-    alert(`✅ Bienvenido ${user.nombre || "Usuario"}`);
-    console.log("Usuario logueado:", user);
-
-    // Guardar en localStorage
-    localStorage.setItem('user', JSON.stringify(user));
-
-    // Redirigir
-    navigate("/home");
+    alert(`✅ Bienvenido ${result.data.usuario.nombre}`);
+    console.log("Usuario logueado:", result.data.usuario);
+    navigate("/dashboard"); // Redirige al home
   } else {
     alert("❌ Error: " + (result.data.error || "Credenciales incorrectas"));
   }
-} catch (error) {
-  console.error("Error en login:", error);
-  alert("Error de conexión: " + error.message);
-} finally {
-  setLoading(false);
-}
-  };
+};
 
   /**
    * Maneja el login con Google
