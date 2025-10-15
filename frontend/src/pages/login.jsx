@@ -1,30 +1,100 @@
+// src/pages/Login.jsx
 import React, { useState } from "react";
 import { loginWithGoogle } from "../firebase";
 import { useNavigate, Link } from "react-router-dom";
-import { loginUsuario } from "../api";
+import { loginUsuario, syncFirebaseUser } from "../api/usuario.api";
 
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  /**
+   * Maneja el login tradicional (email/password)
+   */
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    setLoading(true);
 
-  const result = await loginUsuario(email, password);
+    try {
+      const result = await loginUsuario(email, password);
 
-  if (result.ok) {
-    alert(`✅ Bienvenido ${result.data.usuario.nombre}`);
-    console.log("Usuario logueado:", result.data.usuario);
-    navigate("/dashboard"); // Redirige al home
-  } else {
-    alert("❌ Error: " + (result.data.error || "Credenciales incorrectas"));
-  }
-};
+      if (result.ok) {
+        alert(`✅ Bienvenido ${result.data.usuario.nombre}`);
+        console.log("Usuario logueado:", result.data.usuario);
+        
+        // Guardar datos en localStorage
+        localStorage.setItem('user', JSON.stringify(result.data.usuario));
+        
+        navigate("/home");
+      } else {
+        alert("❌ Error: " + (result.data.error || "Credenciales incorrectas"));
+      }
+    } catch (error) {
+      console.error("Error en login:", error);
+      alert("Error de conexión: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  /**
+   * Maneja el login con Google
+   * 
+   * FLUJO COMPLETO:
+   * 1. Llama a loginWithGoogle() que abre popup de Google
+   * 2. Firebase autentica y devuelve user + idToken
+   * 3. Llama a syncFirebaseUser() que sincroniza con backend
+   * 4. Backend busca/crea usuario en MongoDB
+   * 5. Guarda datos en localStorage
+   * 6. Redirige a /home
+   */
   const handleGoogleLogin = async () => {
-    const user = await loginWithGoogle();
-    if (user) navigate("/home"); // redirige si el login fue exitoso
+    setLoading(true);
+    
+    try {
+      console.log("🔵 PASO 1: Iniciando autenticación con Google...");
+      const { user, idToken } = await loginWithGoogle();
+
+      if (!user) {
+        alert("No se pudo autenticar el usuario con Google");
+        setLoading(false);
+        return;
+      }
+
+      console.log("✅ PASO 2: Usuario autenticado en Firebase");
+      console.log("Datos del usuario:", {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL
+      });
+
+      console.log("🔵 PASO 3: Sincronizando con backend Django/MongoDB...");
+      const resultado = await syncFirebaseUser(user, idToken);
+
+      if (resultado?.success && resultado?.user) {
+        console.log("✅ PASO 4: Usuario sincronizado correctamente");
+        console.log("Datos desde MongoDB:", resultado.user);
+        
+        // Guardar en localStorage para mantener sesión
+        localStorage.setItem('user', JSON.stringify(resultado.user));
+        localStorage.setItem('idToken', idToken);
+        
+        alert(`✅ Bienvenido ${resultado.user.nombre}!`);
+        navigate("/home");
+      } else {
+        alert("Error al iniciar sesión con Google. Revisa la consola.");
+        console.error("Error en respuesta del backend:", resultado);
+      }
+
+    } catch (error) {
+      console.error("🔥 Error en login con Google:", error);
+      alert("Error al iniciar sesión con Google: " + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -39,6 +109,7 @@ const Login = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={loading}
           />
 
           <label htmlFor="password">Contraseña</label>
@@ -48,14 +119,18 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={loading}
           />
 
-          <button type="submit">Ingresar</button>
+          <button type="submit" disabled={loading}>
+            {loading ? "Ingresando..." : "Ingresar"}
+          </button>
 
-          {/* 🔥 Botón Google */}
+          {/* Botón de Google */}
           <button
             type="button"
             onClick={handleGoogleLogin}
+            disabled={loading}
             aria-label="Iniciar sesión con Google"
             className="google-btn"
           >
@@ -79,10 +154,10 @@ const Login = () => {
               />
               <path
                 fill="#4285F4"
-                d="M24 48c6.49 0 11.94-2.15 15.92-5.86l-7.12-5.51c-1.96 1.35-4.46 2.2-7.16 2.2-6.23 0-11.52-4.1-13.77-9.78l-8.3 5.85C6.8 42.53 14.8 48 24 48z"
+                d="M24 48c6.49 0 11.94-2.15 15.92-5.86l-7.12-5.51c-1.96 1.35-4.46 2.2-7.16 2.20-6.23 0-11.52-4.1-13.77-9.78l-8.3 5.85C6.8 42.53 14.8 48 24 48z"
               />
             </svg>
-            Iniciar sesión con Google
+            {loading ? "Procesando..." : "Iniciar sesión con Google"}
           </button>
 
           <p>

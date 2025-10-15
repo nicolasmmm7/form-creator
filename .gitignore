@@ -12,4 +12,7 @@ db.sqlite3
 # Archivos de configuración de entorno
 .env
 
+# Archivos de Firebase
+
+
 
