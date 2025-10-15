@@ -1,91 +1,206 @@
-// src/usuario.api.js
-const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000'; // URL base del backend Django
 
-export const registrarUsuario = async (usuarioData) => {
-  try {
-    const response = await fetch(`${API_URL}/usuarios/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(usuarioData),
-    });
-    return await response.json();
-  } catch (error) {
-    console.error("❌ Error al registrar usuario:", error);
-    throw error;
-  }
-};
 
-export const loginUsuario = async (email, password) => {
-  try {
-    const response = await fetch(`${API_URL}/usuarios/login/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, clave_hash: password }),
-    });
-
-    const data = await response.json();
-    return { ok: response.ok, data };
-  } catch (error) {
-    console.error("❌ Error al iniciar sesión:", error);
-    return { ok: false, data: { error: "Error de conexión con el servidor" } };
-  }
-};
+const API_URL = 'http://127.0.0.1:8000/api';
 
 /**
- * 🔥 Sincronizar usuario de Firebase con backend Django/MongoDB
+ * 🔥 FUNCIÓN CRÍTICA: Sincroniza usuario de Firebase con MongoDB
  * 
- * 1️⃣ Envía el ID Token de Firebase al backend
- * 2️⃣ El backend verifica el token con Firebase Admin SDK
- * 3️⃣ El backend crea/actualiza el usuario en MongoDB
- * 4️⃣ Retorna los datos completos del usuario
+ * ¿Cuándo se llama?
+ * - Después de loginWithGoogle() en Login.jsx
+ * - Después de loginWithGoogle() en Register.jsx
+ * 
+ * ¿Qué hace?
+ * 1. Envía el ID Token de Firebase al backend Django
+ * 2. Backend verifica el token con Firebase Admin SDK
+ * 3. Backend busca/crea el usuario en MongoDB
+ * 4. Retorna los datos completos del usuario
+ * 
+ * @param {Object} user - Objeto user de Firebase (uid, email, displayName, photoURL)
+ * @param {string} idToken - JWT Token de Firebase para verificación
+ * @returns {Promise<Object>} - Datos del usuario desde MongoDB
  */
-export const syncFirebaseUser = async (firebaseUser, idToken) => {
-  try {
-    console.log("📡 Sincronizando usuario con backend...");
-    console.log("Usuario Firebase:", {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email,
-      displayName: firebaseUser.displayName
-    });
+export const syncFirebaseUser = async (user, idToken) => {
+  console.log("🔵 syncFirebaseUser: Iniciando sincronización con backend...");
+  console.log("   ├─ UID:", user.uid);
+  console.log("   ├─ Email:", user.email);
+  console.log("   ├─ Display Name:", user.displayName);
+  console.log("   └─ Token (primeros 30 chars):", idToken.substring(0, 30) + "...");
 
-    // ⚠️ IMPORTANTE: La ruta correcta incluye /api/ SOLO si está definida así en urls.py
-    // En la mayoría de casos es /api/auth/firebase/
-    console.log("ver el ID Token:", idToken); //para ver cuál se envía y si se envía bien
-    const response = await fetch(`${API_URL}/api/auth/firebase/`, {
-      method: "POST",
+  try {
+    const response = await fetch(`${API_URL}/auth/firebase/`, {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${idToken}`, // Enviar token en header
+        'Content-Type': 'application/json',
+        // ¡CRÍTICO! El token debe ir en el header Authorization
+        'Authorization': `Bearer ${idToken}`
       },
       body: JSON.stringify({
-        uid: firebaseUser.uid,
-        email: firebaseUser.email,
-        nombre: firebaseUser.displayName,
-        avatar_url: firebaseUser.photoURL,
-        empresa: { nombre: "sin_empresa" },
-      }),
+        nombre: user.displayName || user.email.split('@')[0],
+        email: user.email,
+        uid: user.uid
+      })
     });
 
-    // Si el backend devuelve HTML, significa que la ruta está mal (404 o error del servidor)
-    const contentType = response.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      const text = await response.text();
-      console.error("⚠️ Respuesta no JSON del backend:", text);
-      throw new Error("Respuesta inválida del backend (no es JSON). Verifica la URL del endpoint.");
+    console.log("📡 Respuesta del servidor:", response.status, response.statusText);
+
+    // Verificar si la respuesta es exitosa
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("❌ Error del servidor:", errorData);
+      throw new Error(errorData.error || `Error del servidor: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log("✅ Sincronización exitosa:", data);
 
-    if (!response.ok) {
-      console.error("❌ Error del backend:", data);
-      throw new Error(data.error || data.detail || "Error al sincronizar usuario");
-    }
-
-    console.log("✅ Usuario sincronizado correctamente:", data);
     return data;
 
   } catch (error) {
     console.error("❌ Error en syncFirebaseUser:", error);
+    throw error;
+  }
+};
+
+
+/**
+ * Función para login tradicional (email/password)
+ * 
+ * @param {string} email - Email del usuario
+ * @param {string} password - Contraseña del usuario
+ * @returns {Promise<Object>} - Datos del usuario y token
+ */
+export const loginUsuario = async (email, password) => {
+  console.log("🔵 loginUsuario: Intentando login tradicional...");
+
+  try {
+    const response = await fetch(`${API_URL}/usuarios/login/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email,
+        clave_hash: password
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("❌ Error en login:", data);
+      return { ok: false, data };
+    }
+
+    console.log("✅ Login exitoso:", data);
+    return { ok: true, data };
+
+  } catch (error) {
+    console.error("❌ Error de conexión:", error);
+    throw error;
+  }
+};
+
+
+/**
+ * Función para registrar nuevo usuario (método tradicional)
+ * 
+ * @param {Object} usuarioData - Datos del usuario a registrar
+ * @returns {Promise<Object>} - ID del usuario creado
+ */
+export const registrarUsuario = async (usuarioData) => {
+  console.log("🔵 registrarUsuario: Creando nuevo usuario...");
+
+  try {
+    const response = await fetch(`${API_URL}/usuarios/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(usuarioData)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("❌ Error al crear usuario:", data);
+      throw new Error(data.error || 'Error al registrar usuario');
+    }
+
+    console.log("✅ Usuario creado:", data);
+    return data;
+
+  } catch (error) {
+    console.error("❌ Error en registro:", error);
+    throw error;
+  }
+};
+
+
+/**
+ * Función para obtener datos del usuario actual
+ * Requiere token de autenticación
+ * 
+ * @param {string} idToken - Token de Firebase
+ * @returns {Promise<Object>} - Datos del usuario
+ */
+export const getUserData = async (idToken) => {
+  console.log("🔵 getUserData: Obteniendo datos del usuario...");
+
+  try {
+    const response = await fetch(`${API_URL}/protected/`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${idToken}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al obtener datos del usuario');
+    }
+
+    const data = await response.json();
+    console.log("✅ Datos del usuario obtenidos:", data);
+    return data;
+
+  } catch (error) {
+    console.error("❌ Error al obtener datos:", error);
+    throw error;
+  }
+};
+
+
+/**
+ * Función para actualizar datos del usuario
+ * 
+ * @param {string} userId - ID del usuario en MongoDB
+ * @param {Object} updateData - Datos a actualizar
+ * @param {string} idToken - Token de Firebase
+ * @returns {Promise<Object>}
+ */
+export const updateUsuario = async (userId, updateData, idToken) => {
+  console.log("🔵 updateUsuario: Actualizando usuario...");
+
+  try {
+    const response = await fetch(`${API_URL}/usuarios/${userId}/`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
+      },
+      body: JSON.stringify(updateData)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Error al actualizar usuario');
+    }
+
+    console.log("✅ Usuario actualizado:", data);
+    return data;
+
+  } catch (error) {
+    console.error("❌ Error al actualizar:", error);
     throw error;
   }
 };

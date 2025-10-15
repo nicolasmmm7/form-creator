@@ -12,39 +12,43 @@ from rest_framework.response import Response
 from firebase_admin import auth
 from datetime import datetime
 from django.http import HttpResponse
-from firebase_auth.authentication import auth
 from django.conf import settings
-import firebase_admin
-from firebase_admin import credentials
 
 
 def hello(request):
-    return HttpResponse("<h1>Hello World</h1>")
+    """Vista de prueba para verificar que Django funciona"""
+    return HttpResponse("<h1>✅ Backend Django funcionando correctamente</h1>")
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def protected_view(request):
     """
     Vista protegida que requiere autenticación Firebase
+    
+    ¿Cómo se protege?
+    - @permission_classes([IsAuthenticated]) requiere autenticación
+    - FirebaseAuthentication (en settings.py) verifica el token
+    - Si token válido, request.user contiene el objeto Usuario
     """
     return Response({
         'message': f'Hola {request.user.nombre}',
         'user_data': {
             'email': request.user.email,
-            'nombre': request.user.nombre
+            'nombre': request.user.nombre,
+            'id': str(request.user.id)
         }
     })
 
+
 # ==========================================
-# ENDPOINT: Sincronización Firebase → MongoDB
+# ENDPOINT CRÍTICO: Sincronización Firebase → MongoDB
 # ==========================================
 @api_view(['POST'])
-@permission_classes([AllowAny])  # Público porque aún no existe el usuario
+@permission_classes([AllowAny])  # Público porque el usuario aún no existe en MongoDB
 def firebase_auth_sync(request):
-    print("🚀 Entramos en firebase_auth_sync")
-
     """
-    Endpoint crítico: Sincroniza usuario de Firebase con MongoDB
+    🔥 ENDPOINT CRÍTICO: Sincroniza usuario de Firebase con MongoDB
     
     ¿Cuándo se llama?
     - Cuando usuario inicia sesión con Google (Login.jsx)
@@ -57,56 +61,112 @@ def firebase_auth_sync(request):
     4. Si existe: actualiza datos (nombre, avatar)
     5. Si NO existe: crea nuevo usuario en MongoDB
     6. Retorna datos completos del usuario para el frontend
+    
+    FLUJO DETALLADO:
+    Frontend → POST /api/auth/firebase/
+           ├─ Header: Authorization: Bearer <idToken>
+           └─ Body: { nombre: "Juan Pérez" }
+    
+    Backend → auth.verify_id_token(idToken)  [Firebase Admin SDK]
+          → Usuario.objects.get(email=xxx)  [MongoDB]
+          → Retorna datos del usuario
     """
+    
+    print("=" * 80)
+    print("🚀 INICIANDO firebase_auth_sync")
+    print("=" * 80)
+    
     try:
         # ===============================================
         # PASO 1: Extraer y validar el token
         # ===============================================
-        
         auth_header = request.META.get('HTTP_AUTHORIZATION', '')
-        print("🔑 Authorization Header recibido:", auth_header) # DEBUG
+        print(f"🔑 Authorization Header: {auth_header[:50]}..." if len(auth_header) > 50 else f"🔑 Authorization Header: {auth_header}")
+        
         if not auth_header.startswith('Bearer '):
+            print("❌ Error: Falta header Authorization")
             return Response(
-                {'error': 'Token de autorización requerido'},
+                {'error': 'Token de autorización requerido. Header debe ser: Authorization: Bearer <token>'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
         
+        # Extraer token (formato: "Bearer <token>")
         id_token = auth_header.split(' ')[1]
-        print("NECESITO VER ID Token:", id_token)  # DEBUG
+        print(f"🔑 Token extraído (primeros 30 chars): {id_token[:30]}...")
         
         # ===============================================
-        # PASO 2: Verificar token con Firebase
+        # PASO 2: Verificar token con Firebase Admin SDK
         # ===============================================
-        # Esto garantiza que el token es auténtico y no ha sido modificado
-        decoded_token = auth.verify_id_token(id_token)
-        firebase_uid = decoded_token['uid']
-        firebase_email = decoded_token.get('email')
+        print("🔵 Verificando token con Firebase...")
         
-        # Extraer datos adicionales del request body
+        try:
+            # ¡ESTE ES EL MOMENTO CLAVE!
+            # Firebase Admin SDK verifica:
+            # 1. Firma digital del token
+            # 2. Fecha de expiración
+            # 3. Que el token pertenece a este proyecto
+            decoded_token = auth.verify_id_token(id_token)
+            
+            firebase_uid = decoded_token['uid']
+            firebase_email = decoded_token.get('email')
+            firebase_picture = decoded_token.get('picture', '')
+            
+            print(f"✅ Token verificado exitosamente")
+            print(f"   ├─ UID: {firebase_uid}")
+            print(f"   ├─ Email: {firebase_email}")
+            print(f"   └─ Picture: {firebase_picture[:50]}..." if firebase_picture else "   └─ Picture: (no disponible)")
+            
+        except auth.InvalidIdTokenError as e:
+            print(f"❌ Token inválido: {str(e)}")
+            return Response(
+                {'error': 'Token de Firebase inválido'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        except auth.ExpiredIdTokenError:
+            print("❌ Token expirado")
+            return Response(
+                {'error': 'Token expirado. Por favor inicia sesión nuevamente.'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        except Exception as e:
+            print(f"❌ Error al verificar token: {str(e)}")
+            return Response(
+                {'error': f'Error al verificar token: {str(e)}'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # Extraer datos adicionales del body
         data = request.data
-        firebase_name = data.get('nombre', '')
-        firebase_picture = decoded_token.get('picture', '')
+        firebase_name = data.get('nombre', firebase_email.split('@')[0])
+        print(f"📝 Nombre desde request: {firebase_name}")
         
         # ===============================================
         # PASO 3: Buscar o crear usuario en MongoDB
         # ===============================================
+        print(f"🔍 Buscando usuario en MongoDB con email: {firebase_email}")
+        
         try:
             # CASO 1: Usuario YA EXISTE (login subsecuente)
             usuario = Usuario.objects.get(email=firebase_email)
+            print(f"✅ Usuario encontrado en MongoDB: {usuario.nombre} (ID: {usuario.id})")
             
             # Actualizar datos si cambiaron en Google
             updated = False
+            
             if usuario.nombre != firebase_name and firebase_name:
+                print(f"   ├─ Actualizando nombre: {usuario.nombre} → {firebase_name}")
                 usuario.nombre = firebase_name
                 updated = True
             
             # Actualizar avatar si cambió
             if usuario.perfil:
                 if usuario.perfil.avatar_url != firebase_picture:
+                    print(f"   ├─ Actualizando avatar")
                     usuario.perfil.avatar_url = firebase_picture
                     updated = True
             else:
                 # Crear perfil si no existe
+                print(f"   ├─ Creando perfil nuevo")
                 usuario.perfil = Perfil(
                     avatar_url=firebase_picture,
                     idioma='es',
@@ -116,10 +176,13 @@ def firebase_auth_sync(request):
             
             if updated:
                 usuario.save()
+                print("   └─ Cambios guardados en MongoDB")
+            else:
+                print("   └─ No hay cambios que guardar")
                 
         except Usuario.DoesNotExist:
             # CASO 2: Usuario NUEVO (primer registro)
-            print(f"📝 Creando nuevo usuario: {firebase_email}")
+            print(f"📝 Usuario NO existe. Creando nuevo usuario en MongoDB...")
             
             # Crear perfil con datos de Google
             perfil = Perfil(
@@ -127,9 +190,9 @@ def firebase_auth_sync(request):
                 idioma='es',
                 timezone='America/Bogota'
             )
+            print(f"   ├─ Perfil creado")
             
-            # Crear empresa si viene en el request
-            empresa = None
+            # Crear empresa por defecto o desde request
             if data.get('empresa'):
                 empresa_data = data.get('empresa')
                 empresa = Empresa(
@@ -137,25 +200,28 @@ def firebase_auth_sync(request):
                     telefono=empresa_data.get('telefono'),
                     nit=empresa_data.get('nit')
                 )
+                print(f"   ├─ Empresa desde request: {empresa.nombre}")
             else:
-                # Empresa por defecto
                 empresa = Empresa(nombre='sin_empresa')
+                print(f"   ├─ Empresa por defecto: sin_empresa")
             
             # Crear usuario en MongoDB
             usuario = Usuario(
-                nombre=firebase_name or firebase_email.split('@')[0],
+                nombre=firebase_name,
                 email=firebase_email,
-                clave_hash=firebase_uid,  # ← IMPORTANTE: usar UID como identificador
+                clave_hash=firebase_uid,  # ← IMPORTANTE: UID de Firebase como identificador
                 fecha_registro=datetime.utcnow(),
                 perfil=perfil,
                 empresa=empresa
             )
             usuario.save()
-            print(f"✅ Usuario creado con ID: {usuario.id}")
+            print(f"   └─ ✅ Usuario creado con ID: {usuario.id}")
         
         # ===============================================
         # PASO 4: Preparar respuesta para el frontend
         # ===============================================
+        print("📦 Preparando respuesta...")
+        
         user_data = {
             'id': str(usuario.id),
             'nombre': usuario.nombre,
@@ -174,23 +240,26 @@ def firebase_auth_sync(request):
             'firebase_uid': firebase_uid
         }
         
+        print("=" * 80)
+        print("✅ SINCRONIZACIÓN COMPLETADA EXITOSAMENTE")
+        print("=" * 80)
+        
         return Response({
             'success': True,
             'user': user_data,
             'message': 'Usuario sincronizado correctamente'
         }, status=status.HTTP_200_OK)
         
-    except auth.InvalidIdTokenError:
-        return Response(
-            {'error': 'Token de Firebase inválido'}, 
-            status=status.HTTP_401_UNAUTHORIZED
-        )
     except Exception as e:
-        print(f"❌ Error en firebase_auth_sync: {str(e)}")
+        print("=" * 80)
+        print(f"❌ ERROR GENERAL en firebase_auth_sync")
+        print("=" * 80)
+        print(f"Error: {str(e)}")
         import traceback
         traceback.print_exc()
+        
         return Response(
-            {'error': f'Error interno: {str(e)}'}, 
+            {'error': f'Error interno del servidor: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
@@ -199,7 +268,7 @@ def firebase_auth_sync(request):
 # ENDPOINT: Registro y listado de usuarios
 # ==========================================
 class UsuarioListCreateAPI(APIView):
-    permission_classes = [AllowAny]  # Permitir registro sin autenticación
+    permission_classes = [AllowAny]
     
     def get(self, request):
         """Listar todos los usuarios"""
@@ -208,7 +277,7 @@ class UsuarioListCreateAPI(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        """Crear nuevo usuario (registro tradicional)"""
+        """Crear nuevo usuario (registro tradicional con email/password)"""
         serializer = UsuarioSerializer(data=request.data)
         if serializer.is_valid():
             usuario = serializer.save()
@@ -226,7 +295,7 @@ class UsuarioLoginAPI(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):
-        """Autenticar usuario con email y contraseña"""
+        """Autenticar usuario con email y contraseña (método tradicional)"""
         email = request.data.get("email")
         clave = request.data.get("clave_hash")
 
@@ -257,6 +326,7 @@ class UsuarioLoginAPI(APIView):
 # ENDPOINT: Detalle de usuario (GET/PUT/DELETE)
 # ==========================================
 class UsuarioDetailAPI(APIView):
+    
     def get_object(self, id):
         try:
             return Usuario.objects.get(id=ObjectId(id))

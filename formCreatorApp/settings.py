@@ -41,15 +41,15 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_extensions',
     'corsheaders',
-    'firebase_auth', 
-    'core', # ← 
+    'apps.authentication',
+    'apps.core',
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware', #debe ir primero papu
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # ←  Debe ir ANTES de CommonMiddleware papu
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -112,15 +112,24 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # REST Framework configuration
 REST_FRAMEWORK = {
+    # Configuración de autenticación
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'firebase_auth.authentication.FirebaseAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        'apps.authentication.firebase_auth.FirebaseAuthentication',  # ← Autenticación personalizada
     ],
-
+    
+    # Configuración de permisos por defecto
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',  # Por defecto, endpoints públicos
+        # Usa @permission_classes([IsAuthenticated]) en vistas que requieran auth
+    ],
+    
+    # Configuración de respuestas
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',  # API navegable para desarrollo
     ],
 }
+
 
 # -------------------------------
 #  INTERNATIONALIZATION
@@ -143,19 +152,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CORS settings (si usas django-cors-headers)
 CORS_ALLOW_ALL_ORIGINS = True  # Solo para desarrollo
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
 
-# Firebase setting
+# ===============================================
+# INICIALIZACIÓN DE FIREBASE
+# ===============================================
+# Importar e inicializar Firebase Admin SDK
+# DEBE ir al FINAL del archivo settings.py
+from apps.core.firebase_config import initialize_firebase
 
-import firebase_auth.authentication
+# Inicializar Firebase UNA SOLA VEZ
+try:
+    initialize_firebase()
+    print("✅ Firebase inicializado desde settings.py")
+except Exception as e:
+    print(f"❌ Error al inicializar Firebase: {e}")
+    # En producción, considera lanzar la excepción:
+    # raise e
 
