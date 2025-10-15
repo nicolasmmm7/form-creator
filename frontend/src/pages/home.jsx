@@ -1,6 +1,6 @@
 import React from "react";
 
-const home = () => {
+const Home = () => {
   return (
     <main>
       <h1>Bienvenido al panel principal</h1>
@@ -9,4 +9,4 @@ const home = () => {
   );
 };
 
-export default home;
+export default Home;
