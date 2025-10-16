@@ -68,7 +68,7 @@ export const syncFirebaseUser = async (user, idToken) => {
  */
 export const loginUsuario = async (email, password) => {
   try {
-    const response = await fetch('${API_URL}/usuarios/login/', {
+    const response = await fetch(`${API_URL}/usuarios/login/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, clave_hash: password }),

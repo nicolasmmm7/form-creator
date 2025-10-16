@@ -21,7 +21,8 @@ const handleSubmit = async (e) => {
   if (result.ok) {
     alert(`✅ Bienvenido ${result.data.usuario.nombre}`);
     console.log("Usuario logueado:", result.data.usuario);
-    navigate("/dashboard"); // Redirige al home
+    localStorage.setItem("usuario", JSON.stringify(result.data.usuario));
+    navigate("/home"); // Redirige al home
   } else {
     alert("❌ Error: " + (result.data.error || "Credenciales incorrectas"));
   }
