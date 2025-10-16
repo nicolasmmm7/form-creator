@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
+  const navigate = useNavigate();
   const [formularios, setFormularios] = useState([]);
   const [usuario, setUsuario] = useState({ nombre: "Usuario" });
 
@@ -21,6 +23,27 @@ const Home = () => {
   return (
     <main className="home">
       <h2>Welcome again, {usuario.nombre}</h2>
+
+      {/* Botón para crear formulario */}
+      <div style={{ textAlign: "right", marginBottom: "1rem" }}>
+        <button
+          onClick={() => navigate("/create")}
+          style={{
+            backgroundColor: "#28a745",
+            color: "white",
+            border: "none",
+            padding: "10px 16px",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontSize: "1rem",
+          }}
+        >
+          + Crear formulario
+        </button>
+      </div>
+
+
+      {/* Lista formularios */}
       <section className="formularios-grid">
         {formularios.length === 0 ? (
           <p>No tienes formularios aún.</p>
@@ -38,6 +61,9 @@ const Home = () => {
           ))
         )}
       </section>
+
+
+      
     </main>
   );
 };

@@ -21,8 +21,15 @@ const handleSubmit = async (e) => {
   if (result.ok) {
     alert(`✅ Bienvenido ${result.data.usuario.nombre}`);
     console.log("Usuario logueado:", result.data.usuario);
-    localStorage.setItem("usuario", JSON.stringify(result.data.usuario));
-    navigate("/home"); // Redirige al home
+
+    // Guarda correctamente el usuario en localStorage
+    localStorage.setItem("user", JSON.stringify({
+      id: result.data.usuario.id,    // <- CORREGIDO
+      nombre: result.data.usuario.nombre,
+      email: result.data.usuario.email
+    }));
+
+    navigate("/home");
   } else {
     alert("❌ Error: " + (result.data.error || "Credenciales incorrectas"));
   }
