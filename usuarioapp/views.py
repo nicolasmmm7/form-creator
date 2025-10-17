@@ -357,3 +357,42 @@ class UsuarioDetailAPI(APIView):
             {"message": "Usuario eliminado"}, 
             status=status.HTTP_204_NO_CONTENT
         )
+    
+class ResetPasswordAPI(APIView):
+    """
+    Permite restablecer la contraseña de un usuario mediante su email.
+    No requiere autenticación previa (el frontend debe controlar seguridad adicional).
+    """
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+        nueva_clave = request.data.get("nueva_clave")
+
+        # Validar campos
+        if not email or not nueva_clave:
+            return Response(
+                {"error": "Se requieren los campos 'email' y 'nueva_clave'."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Buscar usuario
+        usuario = Usuario.objects(email=email).first()
+        if not usuario:
+            return Response(
+                {"error": "No existe ningún usuario registrado con ese correo."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Actualizar contraseña
+        usuario.clave_hash = nueva_clave
+        usuario.save()
+
+        return Response(
+            {
+                "message": "Contraseña restablecida correctamente.",
+                "usuario_id": str(usuario.id)
+            },
+            status=status.HTTP_200_OK
+        )
