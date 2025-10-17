@@ -27,12 +27,35 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
 
+    const correoRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const celularRegex = /^[0-9]{10,15}$/;
+
+    // 🔎 Validaciones previas
+    if (!correoRegex.test(formData.correo)) {
+      alert("❌ Por favor, ingresa un correo electrónico válido.");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      alert("⚠️ La contraseña debe tener al menos 6 caracteres.");
+      setLoading(false);
+      return;
+    }
+
+    if (!celularRegex.test(formData.celular)) {
+      alert("⚠️ Ingresa un número de celular válido (10–15 dígitos).");
+      setLoading(false);
+      return;
+    }
+
     const nuevoUsuario = {
-      nombre: formData.nombre + " " + formData.apellido,
+      nombre: `${formData.nombre} ${formData.apellido}`,
       email: formData.correo,
       clave_hash: formData.password,
+      celular: formData.celular,
       empresa: { nombre: "sin_empresa" },
-      perfil: { idioma: "es", timezone: "America/Bogota" }
+      perfil: { idioma: "es", timezone: "America/Bogota" },
     };
 
     try {
@@ -56,18 +79,10 @@ const Register = () => {
 
   /**
    * Maneja el registro con Google
-   * 
-   * FLUJO COMPLETO:
-   * 1. Llama a loginWithGoogle() que abre popup de Google
-   * 2. Firebase autentica y devuelve user + idToken
-   * 3. Llama a syncFirebaseUser() que sincroniza con backend
-   * 4. Backend crea/actualiza usuario en MongoDB
-   * 5. Guarda datos en localStorage
-   * 6. Redirige a /home
    */
   const handleGoogleRegister = async () => {
     setLoading(true);
-    
+
     try {
       console.log("🔵 PASO 1: Autenticando con Firebase...");
       const { user, idToken } = await loginWithGoogle();
@@ -78,30 +93,23 @@ const Register = () => {
         return;
       }
 
-      console.log("✅ PASO 2: Usuario autenticado en Firebase");
-      console.log("Usuario:", {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName
-      });
+      console.log("✅ PASO 2: Usuario autenticado en Firebase", user);
 
       console.log("🔵 PASO 3: Sincronizando con backend Django...");
       const resultado = await syncFirebaseUser(user, idToken);
 
       if (resultado?.success && resultado?.user) {
         console.log("✅ PASO 4: Usuario sincronizado en MongoDB");
-        
-        // Guardar datos en localStorage para mantener sesión
-        localStorage.setItem('user', JSON.stringify(resultado.user));
-        localStorage.setItem('idToken', idToken);
-        
+
+        localStorage.setItem("user", JSON.stringify(resultado.user));
+        localStorage.setItem("idToken", idToken);
+
         alert(`✅ Bienvenido ${resultado.user.nombre}!`);
         navigate("/home");
       } else {
         alert("Error al registrar con Google. Revisa la consola.");
         console.error("Error en respuesta del backend:", resultado);
       }
-
     } catch (error) {
       console.error("🔥 Error en registro con Google:", error);
       alert("Error al iniciar sesión con Google: " + error.message);

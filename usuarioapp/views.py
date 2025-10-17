@@ -315,7 +315,7 @@ class UsuarioLoginAPI(APIView):
 # ENDPOINT: Detalle de usuario (GET/PUT/DELETE)
 # ==========================================
 class UsuarioDetailAPI(APIView):
-    
+
     def get_object(self, id):
         try:
             return Usuario.objects.get(id=ObjectId(id))
@@ -325,35 +325,74 @@ class UsuarioDetailAPI(APIView):
     def get(self, request, id):
         usuario = self.get_object(id)
         if not usuario:
-            return Response(
-                {"error": "Usuario no encontrado"}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
         serializer = UsuarioSerializer(usuario)
         return Response(serializer.data)
 
     def put(self, request, id):
+        """Permite actualización total o parcial de usuario"""
         usuario = self.get_object(id)
         if not usuario:
-            return Response(
-                {"error": "Usuario no encontrado"}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        serializer = UsuarioSerializer(usuario, data=request.data)
+            return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+        # 💡 Importante: `partial=True` permite enviar solo algunos campos
+        serializer = UsuarioSerializer(usuario, data=request.data, partial=True)
+
         if serializer.is_valid():
             serializer.save()
-            return Response({"message": "Usuario actualizado correctamente"})
+            return Response({
+                "message": "Usuario actualizado correctamente",
+                "usuario": serializer.data
+            }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, id):
+        """Actualización parcial (alternativa explícita a PUT)"""
+        return self.put(request, id)
 
     def delete(self, request, id):
         usuario = self.get_object(id)
         if not usuario:
+            return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+        usuario.delete()
+        return Response({"message": "Usuario eliminado"}, status=status.HTTP_204_NO_CONTENT)
+
+    
+class ResetPasswordAPI(APIView):
+    """
+    Permite restablecer la contraseña de un usuario mediante su email.
+    No requiere autenticación previa (el frontend debe controlar seguridad adicional).
+    """
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+        nueva_clave = request.data.get("nueva_clave")
+
+        # Validar campos
+        if not email or not nueva_clave:
             return Response(
-                {"error": "Usuario no encontrado"}, 
+                {"error": "Se requieren los campos 'email' y 'nueva_clave'."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Buscar usuario
+        usuario = Usuario.objects(email=email).first()
+        if not usuario:
+            return Response(
+                {"error": "No existe ningún usuario registrado con ese correo."},
                 status=status.HTTP_404_NOT_FOUND
             )
-        usuario.delete()
+
+        # Actualizar contraseña
+        usuario.clave_hash = nueva_clave
+        usuario.save()
+
         return Response(
-            {"message": "Usuario eliminado"}, 
-            status=status.HTTP_204_NO_CONTENT
+            {
+                "message": "Contraseña restablecida correctamente.",
+                "usuario_id": str(usuario.id)
+            },
+            status=status.HTTP_200_OK
         )

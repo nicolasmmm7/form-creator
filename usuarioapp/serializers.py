@@ -17,9 +17,9 @@ class PerfilSerializer(serializers.Serializer):
 
 class UsuarioSerializer(serializers.Serializer):
     id = serializers.CharField(read_only=True)
-    nombre = serializers.CharField(required=True)
-    email = serializers.EmailField(required=True)
-    clave_hash = serializers.CharField(required=True)
+    nombre = serializers.CharField(required=False)
+    email = serializers.EmailField(required=False)
+    clave_hash = serializers.CharField(required=False)
     fecha_registro = serializers.DateTimeField(read_only=True)
     empresa = EmpresaSerializer(required=False)
     perfil = PerfilSerializer(required=False)
@@ -29,25 +29,36 @@ class UsuarioSerializer(serializers.Serializer):
         perfil_data = validated_data.pop('perfil', None)
 
         usuario = Usuario(**validated_data)
-        # reparar utcnow() viendo que ya no sirve
         usuario.fecha_registro = datetime.now()
 
         if empresa_data:
             usuario.empresa = Empresa(**empresa_data)
         if perfil_data:
-            
             usuario.perfil = Perfil(**perfil_data)
 
         usuario.save()
         return usuario
 
     def update(self, instance, validated_data):
+        # Permitir actualización parcial de campos simples
         for attr, value in validated_data.items():
             if attr == "empresa" and value:
-                instance.empresa = Empresa(**value)
+                # Actualizar o crear campos dentro de empresa
+                if instance.empresa:
+                    for key, val in value.items():
+                        setattr(instance.empresa, key, val)
+                else:
+                    instance.empresa = Empresa(**value)
             elif attr == "perfil" and value:
-                instance.perfil = Perfil(**value)
+                # Actualizar o crear campos dentro de perfil
+                if instance.perfil:
+                    for key, val in value.items():
+                        setattr(instance.perfil, key, val)
+                else:
+                    instance.perfil = Perfil(**value)
             else:
                 setattr(instance, attr, value)
+
         instance.save()
         return instance
+
