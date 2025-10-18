@@ -1,0 +1,232 @@
+/* ======= Colores ======= */
+:root {
+  --color-fondo: linear-gradient(135deg, #AEEBE3 0%, #67C7B7 50%, #4C9A92 100%); 
+  --color-primario: #4C9A92;
+  --color-secundario: #67C7B7;
+  --color-fondo-alternativo: #F5FBFA;
+  --color-borde: #D9E7E4;
+  --color-acento: #F28C8C;
+  --color-titulo: #2E3C3A;
+  --color-texto-secundario: #6C7A78;
+  --color-exito: #52C88C;
+  --sombra: rgba(76, 154, 146, 0.15);
+  --transicion: 0.3s ease;
+}
+
+/* ======= Reset básico ======= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+/* ======= Fondo general ======= */
+body {
+  background: var(--color-fondo);
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1rem;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+/* ======= Contenedor principal LOGIN ======= */
+#main-login #login-section {
+  background: var(--color-fondo-alternativo);
+  padding: 3rem 2.5rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 0 60px rgba(56, 56, 56, 0.459);
+  width: clamp(350px, 65%, 800px);
+  margin: auto;
+}
+
+/* ======= Contenedor principal REGISTER ======= */
+#main-register #register-section {
+  background: var(--color-fondo-alternativo);
+  padding: 3rem 2.5rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 0 60px rgba(56, 56, 56, 0.459);
+  width: clamp(29em, 70%, 800px);
+  margin: auto;
+}
+
+/* ======= Títulos ======= */
+#login-titulo,
+#register-titulo {
+  color: var(--color-titulo);
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* ======= Formularios ======= */
+#login-form,
+#register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ======= Labels ======= */
+#login-form label,
+#register-form label {
+  text-align: left;
+  font-size: 0.9rem;
+  color: var(--color-titulo);
+  font-weight: 500;
+}
+
+/* ======= Inputs ======= */
+#login-email,
+#login-password,
+#register-nombre,
+#register-apellido,
+#register-correo,
+#register-password,
+#register-celular {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  outline: none;
+}
+
+#login-email::placeholder,
+#login-password::placeholder,
+#register-nombre::placeholder,
+#register-apellido::placeholder,
+#register-correo::placeholder,
+#register-password::placeholder,
+#register-celular::placeholder {
+  color: var(--color-texto-secundario);
+}
+
+#login-email:focus,
+#login-password:focus,
+#register-nombre:focus,
+#register-apellido:focus,
+#register-correo:focus,
+#register-password:focus,
+#register-celular:focus {
+  border-color: var(--color-secundario);
+  box-shadow: 0 0 6px var(--color-secundario);
+}
+
+/* ======= Botones Submit ======= */
+#login-btn-submit,
+#register-btn-submit {
+  padding: 0.9rem;
+  border: none;
+  border-radius: 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transicion);
+  background-color: var(--color-primario);
+  color: #fff;
+}
+
+#login-btn-submit:hover,
+#register-btn-submit:hover {
+  background-color: var(--color-secundario);
+}
+
+/* ======= Botones Google ======= */
+#login-btn-google,
+#register-btn-google {
+  padding: 0.9rem;
+  border: none;
+  border-radius: 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transicion);
+  background-color: #fff;
+  border: 1px solid var(--color-borde);
+  color: var(--color-titulo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+#login-btn-google:hover,
+#register-btn-google:hover {
+  background-color: var(--color-fondo-alternativo);
+  color: var(--color-primario);
+  border-color: var(--color-primario);
+}
+
+/* ======= Textos y enlaces ======= */
+#login-texto-olvidaste,
+#login-texto-registro,
+#register-descripcion,
+#register-texto-login {
+  font-size: 0.9rem;
+  color: var(--color-texto-secundario);
+  text-align: center;
+}
+
+#login-texto-olvidaste a,
+#login-texto-registro a,
+#register-texto-login a {
+  color: var(--color-acento);
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--transicion);
+}
+
+#login-texto-olvidaste a:hover,
+#login-texto-registro a:hover,
+#register-texto-login a:hover {
+  color: var(--color-primario);
+}
+
+/* ======= Responsividad ======= */
+@media (max-width: 480px) {
+  #main-login #login-section,
+  #main-register #register-section {
+    padding: 2rem 1.5rem;
+    max-width: 90%;
+  }
+
+  #login-titulo,
+  #register-titulo {
+    font-size: 1.5rem;
+  }
+}
+
+/* ======= Bloquear selección de texto ======= */
+body, 
+#main-login, 
+#main-register,
+#login-section,
+#register-section,
+#login-titulo,
+#register-titulo,
+#login-form label,
+#register-form label,
+#login-texto-olvidaste,
+#login-texto-registro,
+#register-descripcion,
+#register-texto-login,
+#login-btn-submit,
+#login-btn-google,
+#register-btn-submit,
+#register-btn-google {
+  user-select: none;
+  cursor: default;
+}
+
+#login-email,
+#login-password,
+#register-nombre,
+#register-apellido,
+#register-correo,
+#register-password,
+#register-celular {
+  user-select: text;
+  cursor: text;
+}
