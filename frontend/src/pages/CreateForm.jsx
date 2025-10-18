@@ -63,6 +63,14 @@ export default function CreateForm() {
     });
   };
 
+  const removeOption = (qIdx, optIdx) => {
+  const q = preguntas[qIdx];
+  updateQuestion(qIdx, {
+    opciones: q.opciones.filter((_, i) => i !== optIdx),
+  });
+};
+
+
   const handleSave = async () => {
     if (!titulo.trim()) return alert("Escribe un título");
     if (preguntas.some(p => !p.enunciado.trim())) {
@@ -126,7 +134,19 @@ export default function CreateForm() {
   };
 
 return (
+  
+
   <main className="create-form-main">
+    {/* Botón Volver */}
+    <div className="create-back-container">
+      <button 
+        className="create-btn-back" 
+        onClick={() => navigate("/home")}
+      >
+        <span className="create-back-arrow">←</span>
+        Volver
+      </button>
+    </div>
     {/* ---------------------- Sección principal ---------------------- */}
     <section className="create-section-main">
       <h2>Crear formulario</h2>
@@ -165,6 +185,7 @@ return (
             <input
               className="create-input"
               value={q.enunciado}
+              style= {{marginTop: 10}}
               onChange={(e) =>
                 updateQuestion(idx, { enunciado: e.target.value })
               }
@@ -192,6 +213,7 @@ return (
                   className="create-input"
                   type="number"
                   value={q.validaciones?.longitud_minima ?? ""}
+                  style= {{marginTop: 10}}
                   onChange={(e) => {
                     const v = {
                       ...(q.validaciones || {}),
@@ -207,6 +229,7 @@ return (
                   className="create-input"
                   type="number"
                   value={q.validaciones?.longitud_maxima ?? ""}
+                  style= {{marginTop: 10}}
                   onChange={(e) => {
                     const v = {
                       ...(q.validaciones || {}),
@@ -228,6 +251,7 @@ return (
                   className="create-input"
                   type="number"
                   value={q.validaciones?.valor_minimo ?? ""}
+                  style= {{marginTop: 10}}
                   onChange={(e) => {
                     const v = {
                       ...(q.validaciones || {}),
@@ -243,6 +267,7 @@ return (
                   className="create-input"
                   type="number"
                   value={q.validaciones?.valor_maximo ?? ""}
+                  style= {{marginTop: 10}}
                   onChange={(e) => {
                     const v = {
                       ...(q.validaciones || {}),
@@ -259,17 +284,26 @@ return (
             <div className="create-options">
               <h4>Opciones</h4>
               {q.opciones.map((opt, i) => (
-                <input
-                  className="create-input"
-                  key={i}
-                  placeholder="Texto de opción"
-                  value={opt.texto}
-                  onChange={(e) => {
-                    const ops = [...q.opciones];
-                    ops[i] = { ...ops[i], texto: e.target.value };
-                    updateQuestion(idx, { opciones: ops });
-                  }}
-                />
+                <div key={i} className="create-option-row">
+                  <input
+                    className="create-input create-option-input"
+                    placeholder="Texto de opción"
+                    value={opt.texto}
+                    onChange={(e) => {
+                      const ops = [...q.opciones];
+                      ops[i] = { ...ops[i], texto: e.target.value };
+                      updateQuestion(idx, { opciones: ops });
+                    }}
+                  />
+                  <button
+                    className="create-btn-remove-option"
+                    type="button"
+                    onClick={() => removeOption(idx, i)}
+                    title="Eliminar opción"
+                  >
+                    ✕
+                  </button>
+                </div>
               ))}
               <button className="create-btn-add-option" type="button" onClick={() => addOption(idx)}>
                 + Agregar opción

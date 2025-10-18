@@ -115,6 +115,7 @@
   box-shadow: 0 2px 8px var(--sombra);
 }
 
+
 .create-section-main h2 {
   font-size: 1.8rem;
   font-weight: 700;
@@ -703,5 +704,143 @@
 
   .create-config-label {
     padding: 0.85rem;
+  }
+}
+
+/* ======= Botón Volver ======= */
+.create-back-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 0 2rem;
+}
+
+.create-btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #ffffff;
+  color: var(--color-titulo);
+  border: 2px solid #ffffff;
+  padding: 0.65rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.create-btn-back:hover {
+  background-color: var(--color-primario);
+  color: white;
+  border-color: var(--color-primario);
+  transform: translateX(-3px);
+  box-shadow: 0 4px 12px rgba(76, 154, 146, 0.2);
+}
+
+.create-back-arrow {
+  font-size: 1.3rem;
+  font-weight: 700;
+  transition: transform 0.3s ease;
+}
+
+.create-btn-back:hover .create-back-arrow {
+  transform: translateX(-3px);
+}
+
+/* Responsividad para el botón volver */
+@media (max-width: 768px) {
+  .create-back-container {
+    padding: 1rem 1rem 0 1rem;
+  }
+
+  .create-btn-back {
+    padding: 0.55rem 1.2rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .create-back-container {
+    padding: 0.75rem 1rem 0 1rem;
+  }
+
+  .create-btn-back {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .create-back-arrow {
+    font-size: 1.1rem;
+  }
+}
+
+/* ======= Fila de opción con botón eliminar ======= */
+.create-option-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.create-option-row .create-option-input {
+  flex: 1;
+  margin: 0;
+}
+
+/* ======= Botón eliminar opción ======= */
+.create-btn-remove-option {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create-btn-remove-option:hover {
+  background-color: #dc2626;
+  color: white;
+  border-color: #dc2626;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.create-btn-remove-option:active {
+  transform: scale(0.95);
+}
+
+/* ======= Contenedor de opciones ======= */
+.create-options {
+  margin-top: 1rem;
+}
+
+.create-options h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-titulo);
+  margin-bottom: 1rem;
+}
+
+/* ======= Responsividad para opciones ======= */
+@media (max-width: 480px) {
+  .create-option-row {
+    gap: 0.5rem;
+  }
+
+  .create-btn-remove-option {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    padding: 0.5rem;
   }
 }
