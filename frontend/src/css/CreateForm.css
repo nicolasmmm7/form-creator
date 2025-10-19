@@ -1,0 +1,846 @@
+/* ======= CreateForm.css - Estilos para página de creación ======= */
+
+/* Reset y box-sizing */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Contenedor principal con layout de dos columnas */
+.create-form-main {
+  display: flex;
+  
+  flex-direction: row;
+  gap: 2rem;
+  padding: rem;
+  max-width: 1600px;
+  margin: 2rem auto 0 auto; 
+  width: 95vw;
+}
+
+/* ======= Breadcrumb navegación ======= */
+.create-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 0.5rem;
+}
+
+.create-breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--color-texto-secundario);
+  text-decoration: none;
+  transition: var(--transicion);
+}
+
+.create-breadcrumb-item:hover {
+  color: var(--color-primario);
+}
+
+.create-breadcrumb-item.active {
+  color: var(--color-primario);
+  font-weight: 600;
+  border-bottom: 3px solid var(--color-primario);
+  padding-bottom: 0.5rem;
+}
+
+.create-breadcrumb-arrow {
+  font-size: 1.5rem;
+  color: var(--color-texto-secundario);
+}
+
+/* ======= Header con botones de acción ======= */
+.create-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.create-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.create-btn-primary {
+  background-color: var(--color-primario);
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transicion);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.create-btn-primary:hover {
+  background-color: #3d7d76;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--sombra);
+}
+
+.create-user-icon {
+  width: 50px;
+  height: 50px;
+  background-color: #e0e7ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transicion);
+}
+
+.create-user-icon:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px var(--sombra);
+}
+
+/* ======= Sección principal (izquierda) ======= */
+.create-section-main {
+  flex: 3;
+  background: var(--color-fondo-alternativo);
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px var(--sombra);
+}
+
+
+.create-section-main h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-titulo);
+  margin-bottom: 1.5rem;
+}
+
+.create-section-main h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-titulo);
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+/* ======= Título y descripción del formulario ======= */
+.create-form-header {
+  background: #E8D9D1;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.create-label {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--color-texto-secundario);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.create-title-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.create-input-title {
+  flex: 1;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-titulo);
+  border: none;
+  border-bottom: 2px solid var(--color-titulo);
+  background: transparent;
+  padding: 0.5rem 0;
+  outline: none;
+  transition: var(--transicion);
+}
+
+.create-input-title:focus {
+  border-bottom-color: var(--color-primario);
+}
+
+.create-input-title::placeholder {
+  color: var(--color-texto-secundario);
+}
+
+.create-edit-icon {
+  font-size: 1.5rem;
+  color: var(--color-titulo);
+  cursor: pointer;
+}
+
+.create-image-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: var(--transicion);
+}
+
+.create-image-upload:hover {
+  opacity: 0.8;
+}
+
+.create-image-placeholder {
+  width: 80px;
+  height: 80px;
+  background-color: #2E3C3A;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 2rem;
+}
+
+.create-upload-text {
+  font-size: 0.9rem;
+  color: var(--color-texto-secundario);
+}
+
+/* ======= Tarjeta de pregunta ======= */
+.create-question-card {
+  background: #D9E7E4;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.create-question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.create-question-number {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-titulo);
+  min-width: 40px;
+}
+
+.create-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  background: white;
+  transition: var(--transicion);
+  outline: none;
+  width: 100%;
+}
+
+.create-input:focus {
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px rgba(76, 154, 146, 0.1);
+}
+
+.create-input::placeholder {
+  color: #c0c0c0;
+}
+
+.create-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  background: white;
+  transition: var(--transicion);
+  outline: none;
+  min-height: 100px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.create-textarea:focus {
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px rgba(76, 154, 146, 0.1);
+}
+
+.create-select {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  background: white;
+  cursor: pointer;
+  transition: var(--transicion);
+  outline: none;
+  min-width: 180px;
+}
+
+.create-select:focus {
+  border-color: var(--color-primario);
+}
+
+/* ======= Validaciones ======= */
+.create-validations {
+  background: rgba(255, 255, 255, 0.5);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+}
+
+.create-validations h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-titulo);
+  margin-bottom: 0.75rem;
+}
+
+/* ======= Opciones de respuesta ======= */
+.create-options {
+  margin-top: 1rem;
+}
+
+.create-options h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-titulo);
+  margin-bottom: 0.75rem;
+}
+
+.create-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.create-option-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.create-radio-circle {
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--color-texto-secundario);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.create-option-input {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 0.5rem;
+  background: white;
+  font-size: 0.9rem;
+  outline: none;
+  transition: var(--transicion);
+}
+
+.create-option-input:focus {
+  border-color: var(--color-primario);
+}
+
+.create-icon-button {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--color-titulo);
+  padding: 0.25rem;
+  transition: var(--transicion);
+}
+
+.create-icon-button:hover {
+  color: var(--color-primario);
+  transform: scale(1.1);
+}
+
+.create-icon-button.delete:hover {
+  color: var(--color-acento);
+}
+
+/* ======= Botones de opciones ======= */
+.create-btn-add-option {
+  background-color: #ffffff;
+  color: var(--color-primario);
+  border: 2px dashed var(--color-primario);
+  padding: 0.65rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transicion);
+  margin-top: 0.5rem;
+  display: inline-block;
+}
+
+.create-btn-add-option:hover {
+  background-color: var(--color-primario);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(76, 154, 146, 0.2);
+}
+
+/* ======= Botones de acción de pregunta ======= */
+.create-question-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.create-btn-secondary {
+  padding: 0.5rem 1.5rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 0.5rem;
+  background: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transicion);
+}
+
+.create-btn-secondary:hover {
+  background: var(--color-fondo-alternativo);
+  border-color: var(--color-primario);
+}
+
+/* ======= Botón eliminar pregunta ======= */
+.create-btn-delete {
+  background-color: #ffffff;
+  color: #dc2626;
+  border: 2px solid #dc2626;
+  padding: 0.65rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transicion);
+  margin-top: 1rem;
+}
+
+.create-btn-delete:hover {
+  background-color: #dc2626;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+}
+
+/* ======= Checkbox obligatorio ======= */
+.create-checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.create-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--color-primario);
+}
+
+.create-checkbox-label {
+  font-size: 0.95rem;
+  color: var(--color-titulo);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* ======= Botón agregar pregunta ======= */
+.create-btn-add {
+  background-color: var(--color-primario);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transicion);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.create-btn-add:hover {
+  background-color: #3d7d76;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--sombra);
+}
+
+/* ======= Divisor ======= */
+.create-divider {
+  border: none;
+  border-top: 2px solid var(--color-borde);
+  margin: 2rem 0;
+}
+
+/* ======= Botón guardar formulario ======= */
+.create-btn-save {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transicion);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.create-btn-save:hover {
+  background-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}
+
+/* ======= Panel lateral derecho (configuración) ======= */
+.create-sidebar {
+  flex: 1;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1.75rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  height: fit-content;
+  position: sticky;
+  top: 2rem;
+  border: 1px solid var(--color-borde);
+}
+
+.create-sidebar-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-titulo);
+  margin-bottom: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 3px solid var(--color-primario);
+}
+
+/* ======= Configuración - Labels y opciones ======= */
+.create-config-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  color: var(--color-titulo);
+  font-weight: 600;
+  transition: var(--transicion);
+  border: 1px solid var(--color-borde);
+}
+
+.create-config-label:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: var(--color-primario);
+}
+
+/* ======= Input de fecha en configuración ======= */
+.create-input-date {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  outline: none;
+  transition: var(--transicion);
+  background: white;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.create-input-date:focus {
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px rgba(76, 154, 146, 0.1);
+}
+
+.create-input-date:hover {
+  border-color: var(--color-primario);
+}
+
+/* ======= Grupos de configuración ======= */
+.create-config-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.create-config-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+/* ======= Responsividad ======= */
+@media (max-width: 1024px) {
+  .create-form-main {
+    flex-direction: column;
+    padding: 1.5rem;
+  }
+
+  .create-sidebar {
+    position: relative;
+    top: 0;
+  }
+
+  .create-section-main {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .create-form-main {
+    padding: 1rem;
+  }
+
+  .create-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .create-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .create-breadcrumb {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .create-question-header {
+    flex-direction: column;
+  }
+
+  .create-select {
+    width: 100%;
+  }
+
+  .create-btn-primary,
+  .create-btn-save {
+    padding: 0.85rem 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  .create-btn-add {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .create-section-main {
+    padding: 1rem;
+  }
+
+  .create-form-header {
+    padding: 1.5rem;
+  }
+
+  .create-title-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .create-input-title {
+    font-size: 1.2rem;
+  }
+
+  .create-question-card {
+    padding: 1rem;
+  }
+
+  .create-option-row {
+    gap: 0.5rem;
+  }
+
+  .create-question-actions {
+    flex-direction: column;
+  }
+
+  .create-btn-secondary,
+  .create-btn-delete,
+  .create-btn-add-option {
+    width: 100%;
+  }
+
+  .create-sidebar {
+    padding: 1.25rem;
+  }
+
+  .create-config-label {
+    padding: 0.85rem;
+  }
+}
+
+/* ======= Botón Volver ======= */
+.create-back-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 0 2rem;
+}
+
+.create-btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #ffffff;
+  color: var(--color-titulo);
+  border: 2px solid #ffffff;
+  padding: 0.65rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.create-btn-back:hover {
+  background-color: var(--color-primario);
+  color: white;
+  border-color: var(--color-primario);
+  transform: translateX(-3px);
+  box-shadow: 0 4px 12px rgba(76, 154, 146, 0.2);
+}
+
+.create-back-arrow {
+  font-size: 1.3rem;
+  font-weight: 700;
+  transition: transform 0.3s ease;
+}
+
+.create-btn-back:hover .create-back-arrow {
+  transform: translateX(-3px);
+}
+
+/* Responsividad para el botón volver */
+@media (max-width: 768px) {
+  .create-back-container {
+    padding: 1rem 1rem 0 1rem;
+  }
+
+  .create-btn-back {
+    padding: 0.55rem 1.2rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .create-back-container {
+    padding: 0.75rem 1rem 0 1rem;
+  }
+
+  .create-btn-back {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .create-back-arrow {
+    font-size: 1.1rem;
+  }
+}
+
+/* ======= Fila de opción con botón eliminar ======= */
+.create-option-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.create-option-row .create-option-input {
+  flex: 1;
+  margin: 0;
+}
+
+/* ======= Botón eliminar opción ======= */
+.create-btn-remove-option {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create-btn-remove-option:hover {
+  background-color: #dc2626;
+  color: white;
+  border-color: #dc2626;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.create-btn-remove-option:active {
+  transform: scale(0.95);
+}
+
+/* ======= Contenedor de opciones ======= */
+.create-options {
+  margin-top: 1rem;
+}
+
+.create-options h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-titulo);
+  margin-bottom: 1rem;
+}
+
+/* ======= Responsividad para opciones ======= */
+@media (max-width: 480px) {
+  .create-option-row {
+    gap: 0.5rem;
+  }
+
+  .create-btn-remove-option {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    padding: 0.5rem;
+  }
+}

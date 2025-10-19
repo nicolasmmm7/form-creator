@@ -5,7 +5,9 @@ import Home from "./pages/home";
 import CreateForm from "./pages/CreateForm";
 import PasswordReset from "./pages/password-reset"; 
 
-import "./css/styles.css";
+import "./css/Auth.css";
+import "./css/Home.css"
+import "./css/CreateForm.css"
 
 function App() {
   return (
