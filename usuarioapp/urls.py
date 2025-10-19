@@ -18,7 +18,7 @@ urlpatterns = [
     #endpoint de prueba de autenticación con Firebase
     path('auth/firebase/', views.firebase_auth_sync, name='firebase_auth_sync'),
     path('login/', UsuarioLoginAPI.as_view(), name='usuarios_login'),  # 👈 esta va antes de la que usa <str:id>
-    path('reset_password/', ResetPasswordAPI.as_view(), name='usuarios_reset_password'), 
+    path('reset-password/', ResetPasswordAPI.as_view(), name='reset-password'), 
     path('', UsuarioListCreateAPI.as_view(), name='usuarios_list_create'),
     path('<str:id>/', UsuarioDetailAPI.as_view(), name='usuarios_detail'),
 

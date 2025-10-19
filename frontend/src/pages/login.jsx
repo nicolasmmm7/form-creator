@@ -135,6 +135,7 @@ const handleSubmit = async (e) => {
               width="20"
               height="20"
               viewBox="0 0 48 48"
+              style={{ marginRight: "8px" }}
             >
               <path
                 fill="#EA4335"
@@ -157,7 +158,7 @@ const handleSubmit = async (e) => {
           </button>
 
           <p>
-            <Link to="#">¿Olvidaste tu contraseña?</Link>
+            <Link to="/password-reset">¿Olvidaste tu contraseña?</Link>
           </p>
           <p>
             ¿Sin cuenta? <Link to="/register">Regístrate aquí</Link>
