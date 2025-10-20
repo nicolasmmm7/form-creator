@@ -169,3 +169,10 @@ except Exception as e:
     # En producción, considera lanzar la excepción:
     # raise e
 
+EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
+
+EMAIL_HOST_USER = 'b04a5d196b6122'
+
+EMAIL_HOST_PASSWORD = '****38fd'
+
+EMAIL_PORT = '2525'

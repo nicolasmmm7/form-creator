@@ -186,3 +186,40 @@ export const updateUsuario = async (userId, updateData, idToken) => {
     throw error;
   }
 };
+
+/**
+ *  Restablecimiento de contraseña (flujo de dos pasos)
+ * 1️ solicitarResetPassword(email) -> envía código al correo
+ * 2️ confirmarResetPassword(email, codigo, nuevaClave) -> cambia la contraseña
+ */
+export const solicitarResetPassword = async (email) => {
+  try {
+    const response = await fetch(`${API_URL}/usuarios/reset-password/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "solicitar", email }),
+    });
+
+    const data = await response.json();
+    return { ok: response.ok, data };
+  } catch (error) {
+    console.error("❌ Error al solicitar código:", error);
+    return { ok: false, data: { error: "Error al conectar con el servidor" } };
+  }
+};
+
+export const confirmarResetPassword = async (email, token, nueva_clave) => {
+  try {
+    const response = await fetch(`${API_URL}/usuarios/reset-password/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "confirmar", email, token, nueva_clave }),
+    });
+
+    const data = await response.json();
+    return { ok: response.ok, data };
+  } catch (error) {
+    console.error("❌ Error al confirmar restablecimiento:", error);
+    return { ok: false, data: { error: "Error al conectar con el servidor" } };
+  }
+};

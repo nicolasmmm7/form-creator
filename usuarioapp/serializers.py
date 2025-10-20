@@ -1,7 +1,7 @@
 # usuarioapp/serializers.py
 from rest_framework import serializers
 from usuarioapp.models import Usuario, Empresa, Perfil
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class EmpresaSerializer(serializers.Serializer):
@@ -62,3 +62,23 @@ class UsuarioSerializer(serializers.Serializer):
         instance.save()
         return instance
 
+
+class ResetPasswordTokenSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    token = serializers.CharField(required=True)
+    expires_at = serializers.DateTimeField(required=False)
+
+    def create(self, validated_data):
+        # Si no se envía expires_at, se establece por defecto (10 minutos)
+        if 'expires_at' not in validated_data:
+            validated_data['expires_at'] = datetime.now() + timedelta(minutes=10)
+        token = ResetPasswordToken(**validated_data)
+        token.save()
+        return token
+
+    def update(self, instance, validated_data):
+        # Actualiza campos existentes
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance

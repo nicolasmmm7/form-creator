@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
-from usuarioapp.models import Usuario, Empresa, Perfil
+from usuarioapp.models import Usuario, Empresa, Perfil, ResetPasswordToken
 from usuarioapp.serializers import UsuarioSerializer
 from bson import ObjectId
 from rest_framework.permissions import IsAuthenticated
@@ -13,6 +13,8 @@ from firebase_admin import auth
 from datetime import datetime
 from django.http import HttpResponse
 from django.conf import settings
+import random, string
+from django.core.mail import send_mail
 
 
 def hello(request):
@@ -357,42 +359,81 @@ class UsuarioDetailAPI(APIView):
         usuario.delete()
         return Response({"message": "Usuario eliminado"}, status=status.HTTP_204_NO_CONTENT)
 
-    
+
+# ==========================================
+# ENDPOINT: Cambiar contraseña con verificacion de correo (POST)
+# ==========================================
 class ResetPasswordAPI(APIView):
     """
-    Permite restablecer la contraseña de un usuario mediante su email.
-    No requiere autenticación previa (el frontend debe controlar seguridad adicional).
+    Flujo de recuperación de contraseña con verificación por correo:
+    1. POST /reset-password/solicitar/  -> envía un código al email
+    2. POST /reset-password/confirmar/  -> verifica el código y cambia la clave
     """
-
     permission_classes = [AllowAny]
 
-    def post(self, request):
-        email = request.data.get("email")
-        nueva_clave = request.data.get("nueva_clave")
+    def post(self, request, action=None):
+        action = request.data.get("action")
 
-        # Validar campos
-        if not email or not nueva_clave:
-            return Response(
-                {"error": "Se requieren los campos 'email' y 'nueva_clave'."},
-                status=status.HTTP_400_BAD_REQUEST
+        # --- 1️⃣ Solicitar código ---
+        if action == "solicitar":
+            email = request.data.get("email")
+
+            if not email:
+                return Response({"error": "Debe ingresar un correo."}, status=400)
+
+            usuario = Usuario.objects(email=email).first()
+            if not usuario:
+                return Response({"error": "No existe un usuario con ese correo."}, status=404)
+
+            # Generar token aleatorio
+            token = ''.join(random.choices(string.digits, k=6))
+
+            # Guardar token en BD (borrando anteriores)
+            ResetPasswordToken.objects(email=email).delete()
+            ResetPasswordToken(email=email, token=token).save()
+
+            # Enviar correo
+            send_mail(
+                subject="Código de verificación - Restablecer contraseña",
+                message=f"Tu código para restablecer la contraseña es: {token}\n"
+                        f"Este código expira en 10 minutos.",
+                from_email="noreply@formcreator.com",
+                recipient_list=[email],
+                fail_silently=False,
             )
 
-        # Buscar usuario
-        usuario = Usuario.objects(email=email).first()
-        if not usuario:
-            return Response(
-                {"error": "No existe ningún usuario registrado con ese correo."},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"message": "Código enviado al correo."}, status=200)
 
-        # Actualizar contraseña
-        usuario.clave_hash = nueva_clave
-        usuario.save()
+        # --- 2️⃣ Confirmar cambio de contraseña ---
+        elif action == "confirmar":
+            email = request.data.get("email")
+            token = request.data.get("token")
+            nueva_clave = request.data.get("nueva_clave")
 
-        return Response(
-            {
-                "message": "Contraseña restablecida correctamente.",
-                "usuario_id": str(usuario.id)
-            },
-            status=status.HTTP_200_OK
-        )
+            if not all([email, token, nueva_clave]):
+                return Response({"error": "Faltan campos requeridos."}, status=400)
+
+            # Buscar token
+            token_doc = ResetPasswordToken.objects(email=email, token=token).first()
+            if not token_doc:
+                return Response({"error": "Código inválido."}, status=400)
+
+            if token_doc.expires_at < datetime.datetime():
+                token_doc.delete()
+                return Response({"error": "El código ha expirado."}, status=400)
+
+            # Cambiar contraseña
+            usuario = Usuario.objects(email=email).first()
+            if not usuario:
+                return Response({"error": "Usuario no encontrado."}, status=404)
+
+            usuario.clave_hash = nueva_clave
+            usuario.save()
+
+            # Eliminar token para evitar reuso
+            token_doc.delete()
+
+            return Response({"message": "Contraseña actualizada correctamente."}, status=200)
+
+        else:
+            return Response({"error": "Acción no válida."}, status=400)

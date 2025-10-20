@@ -6,6 +6,8 @@ import { loginWithGoogle } from "../firebase";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUsuario, syncFirebaseUser } from "../api/usuario.api";
 
+
+
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -94,36 +96,36 @@ const handleSubmit = async (e) => {
   };
 
   return (
-    <main>
-      <section>
-        <h1>Iniciar Sesión</h1>
-        <form onSubmit={handleSubmit}>
-          <label htmlFor="email">Correo electrónico</label>
+    <main id="main-login">
+      <section id="login-section">
+        <h1 id="login-titulo">Iniciar Sesión</h1>
+        <form id="login-form" onSubmit={handleSubmit}>
+          <label htmlFor="login-email">Correo electrónico</label>
           <input
             type="email"
-            id="email"
+            id="login-email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading}
           />
 
-          <label htmlFor="password">Contraseña</label>
+          <label htmlFor="login-password">Contraseña</label>
           <input
             type="password"
-            id="password"
+            id="login-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={loading}
           />
 
-          <button type="submit" disabled={loading}>
+          <button id="login-btn-submit" type="submit" disabled={loading}>
             {loading ? "Ingresando..." : "Ingresar"}
           </button>
 
-          {/* Botón de Google */}
           <button
+            id="login-btn-google"
             type="button"
             onClick={handleGoogleLogin}
             disabled={loading}
@@ -135,6 +137,7 @@ const handleSubmit = async (e) => {
               width="20"
               height="20"
               viewBox="0 0 48 48"
+              style={{ marginRight: "8px" }}
             >
               <path
                 fill="#EA4335"
@@ -157,9 +160,9 @@ const handleSubmit = async (e) => {
           </button>
 
           <p>
-            <Link to="#">¿Olvidaste tu contraseña?</Link>
+            <Link to="/password-reset">¿Olvidaste tu contraseña?</Link>
           </p>
-          <p>
+          <p id="login-texto-registro">
             ¿Sin cuenta? <Link to="/register">Regístrate aquí</Link>
           </p>
         </form>

@@ -1,5 +1,5 @@
 # usuarioapp/models.py
-from datetime import datetime
+from datetime import datetime, timedelta
 from mongoengine import Document, EmailField, StringField, DateTimeField, LongField, EmbeddedDocument, EmbeddedDocumentField
 
 class Empresa(EmbeddedDocument):
@@ -29,5 +29,11 @@ class Usuario(Document):
     meta = {
         'collection': 'usuarios'
     }
+
+
+class ResetPasswordToken(Document):
+    email = StringField(required=True)
+    token = StringField(required=True)
+    expires_at = DateTimeField(default=lambda: datetime.now() + timedelta(minutes=10))  # válido por 10 min
 
 
