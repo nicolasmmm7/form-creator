@@ -9,7 +9,7 @@ from usuarioapp.serializers import UsuarioSerializer
 from bson import ObjectId
 from rest_framework.permissions import IsAuthenticated
 from firebase_admin import auth
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.http import HttpResponse
 from django.conf import settings
 import random, string
@@ -390,12 +390,18 @@ class ResetPasswordAPI(APIView):
 
             # Guardar token en BD (borrando anteriores)
             ResetPasswordToken.objects(email=email).delete()
-            ResetPasswordToken(email=email, token=token).save()
+           # ResetPasswordToken(email=email, token=token).save()
 
-            # 👇 se encarga de enviar el correo Brevo
+             # Guardar token con expiración (10 minutos)
+            expires_at = datetime.utcnow() + timedelta(minutes=10)
+            ResetPasswordToken(email=email, token=token, expires_at=expires_at).save()
+
+             # Enviar correo usando Brevo: la función devuelve True/False
             enviado = send_otp_email(email, token)
             if not enviado:
-                return Response({"error": "No se pudo enviar el correo."}, status=500)
+                # Si falla el envío, elimina el token y devuelve error
+                ResetPasswordToken.objects(email=email).delete()
+                return Response({"error": "No se pudo enviar el correo. Intenta más tarde."}, status=500)
 
             return Response({"message": "Código enviado al correo."}, status=200)
 
@@ -412,7 +418,8 @@ class ResetPasswordAPI(APIView):
             token_doc = ResetPasswordToken.objects(email=email, token=token).first()
             if not token_doc:
                 return Response({"error": "Código inválido."}, status=400)
-
+            
+            # Verificar expiración
             if token_doc.expires_at < datetime.utcnow():
                 token_doc.delete()
                 return Response({"error": "El código ha expirado."}, status=400)

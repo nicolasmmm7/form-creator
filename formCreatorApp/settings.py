@@ -169,10 +169,7 @@ except Exception as e:
     # En producción, considera lanzar la excepción:
     # raise e
 
-EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
-
-EMAIL_HOST_USER = 'b04a5d196b6122'
-
-EMAIL_HOST_PASSWORD = '****38fd'
-
-EMAIL_PORT = '2525'
+#Settings para Brevo 
+BREVO_API_KEY = "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"     #por ahora la dejaré ahí
+BREVO_SENDER_NAME = "otpformcreator"
+BREVO_SENDER_EMAIL = "formcreatorufps@gmail.com"
