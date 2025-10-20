@@ -168,13 +168,6 @@ const Home = () => {
     return "PUBLICADO";
   };
 
-  if (loading) {
-    return (
-      <main style={{ padding: "40px", textAlign: "center", background: "#e8f5e9" }}>
-        <h2>Cargando formularios...</h2>
-      </main>
-    );
-  }
 
   return (
     <main className="home-main">

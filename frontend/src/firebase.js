@@ -62,7 +62,7 @@ export const loginWithGoogle = async () => {
       displayName: user.displayName
     });
     
-    console.log("🔑 ID Token obtenido (primeros 50 chars):", idToken.substring(0, 50) + "...");
+    console.log("🔑 ID Token obtenido (primeros 50 chars):", idToken.substring(0, 10) + "...");
     
     // Retornar datos para el componente
     return { user, idToken };

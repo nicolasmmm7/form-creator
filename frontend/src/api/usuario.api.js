@@ -3,7 +3,7 @@
 const API_URL = 'http://127.0.0.1:8000/api';
 
 /**
- * 🔥 FUNCIÓN CRÍTICA: Sincroniza usuario de Firebase con MongoDB
+ *  FUNCIÓN CRÍTICA: Sincroniza usuario de Firebase con MongoDB
  * 
  * ¿Cuándo se llama?
  * - Después de loginWithGoogle() en Login.jsx
@@ -19,6 +19,7 @@ const API_URL = 'http://127.0.0.1:8000/api';
  * @param {string} idToken - JWT Token de Firebase para verificación
  * @returns {Promise<Object>} - Datos del usuario desde MongoDB
  */
+
 export const syncFirebaseUser = async (user, idToken) => {
   console.log("🔵 syncFirebaseUser: Iniciando sincronización con backend...");
   console.log("   ├─ UID:", user.uid);
@@ -223,3 +224,5 @@ export const confirmarResetPassword = async (email, token, nueva_clave) => {
     return { ok: false, data: { error: "Error al conectar con el servidor" } };
   }
 };
+
+

@@ -8,14 +8,14 @@ from usuarioapp.models import Usuario, Empresa, Perfil, ResetPasswordToken
 from usuarioapp.serializers import UsuarioSerializer
 from bson import ObjectId
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from firebase_admin import auth
 from datetime import datetime
 from django.http import HttpResponse
 from django.conf import settings
 import random, string
 from django.core.mail import send_mail
-
+from utils.email_utils import send_otp_email
+from django.core.cache import cache  # para guardar temporalmente el OTP
 
 def hello(request):
     """Vista de prueba para verificar que Django funciona"""
@@ -371,7 +371,7 @@ class ResetPasswordAPI(APIView):
     """
     permission_classes = [AllowAny]
 
-    def post(self, request, action=None):
+    def post(self, request):
         action = request.data.get("action")
 
         # --- 1️⃣ Solicitar código ---
@@ -392,15 +392,10 @@ class ResetPasswordAPI(APIView):
             ResetPasswordToken.objects(email=email).delete()
             ResetPasswordToken(email=email, token=token).save()
 
-            # Enviar correo
-            send_mail(
-                subject="Código de verificación - Restablecer contraseña",
-                message=f"Tu código para restablecer la contraseña es: {token}\n"
-                        f"Este código expira en 10 minutos.",
-                from_email="noreply@formcreator.com",
-                recipient_list=[email],
-                fail_silently=False,
-            )
+            # 👇 se encarga de enviar el correo Brevo
+            enviado = send_otp_email(email, token)
+            if not enviado:
+                return Response({"error": "No se pudo enviar el correo."}, status=500)
 
             return Response({"message": "Código enviado al correo."}, status=200)
 
@@ -418,7 +413,7 @@ class ResetPasswordAPI(APIView):
             if not token_doc:
                 return Response({"error": "Código inválido."}, status=400)
 
-            if token_doc.expires_at < datetime.datetime():
+            if token_doc.expires_at < datetime.utcnow():
                 token_doc.delete()
                 return Response({"error": "El código ha expirado."}, status=400)
 

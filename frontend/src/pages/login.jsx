@@ -159,7 +159,7 @@ const handleSubmit = async (e) => {
             {loading ? "Procesando..." : "Iniciar sesión con Google"}
           </button>
 
-          <p>
+          <p id="login-texto-registro">
             <Link to="/password-reset">¿Olvidaste tu contraseña?</Link>
           </p>
           <p id="login-texto-registro">
