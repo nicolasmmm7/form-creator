@@ -8,6 +8,7 @@ import PasswordReset from "./pages/password-reset";
 import "./css/Auth.css";
 import "./css/Home.css"
 import "./css/CreateForm.css"
+import "./css/password.css"
 
 function App() {
   return (
