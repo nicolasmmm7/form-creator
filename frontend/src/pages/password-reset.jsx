@@ -88,6 +88,12 @@ const PasswordReset = () => {
           </button>
         </>
       )}
+      <button 
+      className="secondary-link"
+        type="button"
+        onClick={() => navigate("/login")}>
+          Volver al login
+      </button>
     </div>
   );
 };
