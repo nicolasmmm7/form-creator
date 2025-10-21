@@ -1,21 +1,49 @@
 import React, { useState } from "react";
 import { solicitarResetPassword, confirmarResetPassword } from "../api/usuario.api";
+import { useNavigate } from "react-router-dom";
 
 const PasswordReset = () => {
   const [step, setStep] = useState(1); // 1: solicitar, 2: confirmar
   const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSolicitar = async () => {
-    const res = await solicitarResetPassword(email);
-    if (res.ok) setStep(2);
-    alert(res.data.message || res.data.error);
+    setLoading(true);
+    try {
+      const res = await solicitarResetPassword(email);
+      if (res.ok) {
+        setStep(2);
+        alert(res.data.message || "Código enviado al correo");
+      } else {
+        alert(res.data.error || "No se pudo enviar el código");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error de conexión");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleConfirmar = async () => {
-    const res = await confirmarResetPassword(email, token, newPassword);
-    alert(res.data.message || res.data.error);
+    setLoading(true);
+    try {
+      const res = await confirmarResetPassword(email, token, newPassword);
+      if (res && res.ok) {
+        alert(res.data.message || "Contraseña cambiada correctamente");
+        navigate("/login");
+      } else {
+        alert((res && res.data && (res.data.error || res.data.message)) || "No se pudo cambiar la contraseña");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error de conexión");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -31,7 +59,9 @@ const PasswordReset = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <button onClick={handleSolicitar}>Enviar código</button>
+          <button onClick={handleSolicitar} disabled={loading || !email}>
+            {loading ? "Enviando..." : "Enviar código"}
+          </button>
         </>
       )}
 
@@ -50,7 +80,12 @@ const PasswordReset = () => {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
           />
-          <button onClick={handleConfirmar}>Cambiar contraseña</button>
+          <button
+            onClick={handleConfirmar}
+            disabled={loading || !token || !newPassword}
+          >
+            {loading ? "Procesando..." : "Cambiar contraseña"}
+          </button>
         </>
       )}
     </div>
