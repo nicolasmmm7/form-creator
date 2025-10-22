@@ -230,3 +230,20 @@ body,
   user-select: text;
   cursor: text;
 }
+
+/* === Fondo fijo real (sin reinicio al hacer scroll) === */
+body {
+  position: relative; /* base para el pseudo-elemento */
+  background: transparent; /* quitamos el degradado directo */
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0; /* top:0; right:0; bottom:0; left:0 */
+  z-index: -1; /* detrás de todo */
+  background: var(--color-fondo);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+}
