@@ -21,7 +21,7 @@ class Validaciones(EmbeddedDocument):
 
 class Pregunta(EmbeddedDocument):
     id = IntField(required=True)
-    tipo = StringField(required=True, choices=('texto_libre', 'opcion_multiple', 'escala_numerica'))
+    tipo = StringField(required=True, choices=('texto_libre', 'opcion_multiple', 'escala_numerica', 'checkbox'))
     enunciado = StringField(required=True)
     obligatorio = BooleanField(default=False)
     opciones = ListField(EmbeddedDocumentField(Opcion))
