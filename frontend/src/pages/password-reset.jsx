@@ -29,6 +29,12 @@ const PasswordReset = () => {
   };
 
   const handleConfirmar = async () => {
+    // Validación: contraseña mínimo 6 caracteres
+    if (!newPassword || newPassword.length < 6) {
+      alert("La contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await confirmarResetPassword(email, token, newPassword);
@@ -82,7 +88,7 @@ const PasswordReset = () => {
           />
           <button
             onClick={handleConfirmar}
-            disabled={loading || !token || !newPassword}
+            disabled={loading || !token || newPassword.length < 6}
           >
             {loading ? "Procesando..." : "Cambiar contraseña"}
           </button>
