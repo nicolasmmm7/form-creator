@@ -1,6 +1,4 @@
-
-
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000/api";
 
 /**
  *  FUNCIÓN CRÍTICA: Sincroniza usuario de Firebase con MongoDB
@@ -130,24 +128,19 @@ export const getUserData = async (idToken) => {
   console.log("🔵 getUserData: Obteniendo datos del usuario...");
 
   try {
-    const response = await fetch(`${API_URL}/protected/`, {
-      method: 'GET',
+    const response = await fetch(`${API_URL}/usuarios/me/`, {
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${idToken}`
-      }
+        "Content-Type": "application/json",
+        Authorization: idToken ? `Bearer ${idToken}` : "",
+      },
     });
 
-    if (!response.ok) {
-      throw new Error('Error al obtener datos del usuario');
-    }
-
     const data = await response.json();
-    console.log("✅ Datos del usuario obtenidos:", data);
-    return data;
-
+    return { ok: response.ok, data };
   } catch (error) {
-    console.error("❌ Error al obtener datos:", error);
-    throw error;
+    console.error("getUserData error:", error);
+    return { ok: false, data: { error: "Error de conexión" } };
   }
 };
 
@@ -222,6 +215,25 @@ export const confirmarResetPassword = async (email, token, nueva_clave) => {
   } catch (error) {
     console.error("❌ Error al confirmar restablecimiento:", error);
     return { ok: false, data: { error: "Error al conectar con el servidor" } };
+  }
+};
+
+export const updateUserData = async (userId, updateData, idToken = null) => {
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (idToken) headers["Authorization"] = `Bearer ${idToken}`;
+
+    const response = await fetch(`${API_URL}/usuarios/${userId}/`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(updateData),
+    });
+
+    const data = await response.json();
+    return { ok: response.ok, data };
+  } catch (error) {
+    console.error("updateUserData error:", error);
+    return { ok: false, data: { error: "Error de conexión" } };
   }
 };
 

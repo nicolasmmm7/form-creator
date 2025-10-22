@@ -155,6 +155,7 @@ return (
         className="create-input"
         value={titulo}
         onChange={(e) => setTitulo(e.target.value)}
+        style={{marginBottom: 5}}
       />
       <label className="create-label">Descripción</label>
       <textarea
@@ -166,12 +167,13 @@ return (
       <h3>Preguntas</h3>
       {preguntas.map((q, idx) => (
         <div key={q.id} className="create-question-card">
-          <label className="create-label">
+          <label className="create-label" >
             Tipo:
             <select
               className="create-select"
               value={q.tipo}
               onChange={(e) => updateQuestion(idx, { tipo: e.target.value })}
+              style={{marginLeft: 10}}
             >
               <option value="texto_libre">Texto libre</option>
               <option value="opcion_multiple">Opción múltiple</option>
@@ -189,6 +191,7 @@ return (
               onChange={(e) =>
                 updateQuestion(idx, { enunciado: e.target.value })
               }
+
             />
           </label>
 
@@ -201,6 +204,7 @@ return (
               onChange={(e) =>
                 updateQuestion(idx, { obligatorio: e.target.checked })
               }
+              style={{ marginLeft: 10 }}
             />
           </label>
 

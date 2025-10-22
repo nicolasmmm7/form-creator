@@ -340,13 +340,36 @@ class UsuarioDetailAPI(APIView):
         # 💡 Importante: `partial=True` permite enviar solo algunos campos
         serializer = UsuarioSerializer(usuario, data=request.data, partial=True)
 
-        if serializer.is_valid():
+        # DEBUG: ver lo que llega desde el cliente
+        print("=== UsuarioDetailAPI.put request.data ===")
+        print(request.data)
+
+        try:
+            if not serializer.is_valid():
+                # devolver errores de validación al frontend
+                print("=== Serializer errors ===")
+                print(serializer.errors)
+                return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+            # intentar guardar; catch para devolver detalle si falla
             serializer.save()
+
+            # volver a serializar el objeto actualizado (asegura formato consistente)
+            usuario_actualizado = Usuario.objects.get(id=usuario.id)
+            resp_serializer = UsuarioSerializer(usuario_actualizado)
+
             return Response({
                 "message": "Usuario actualizado correctamente",
-                "usuario": serializer.data
+                "usuario": resp_serializer.data
             }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {"error": "Error al validar/guardar usuario", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def patch(self, request, id):
         """Actualización parcial (alternativa explícita a PUT)"""

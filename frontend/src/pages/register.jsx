@@ -62,7 +62,7 @@ const Register = () => {
       const data = await registrarUsuario(nuevoUsuario);
 
       if (data.id) {
-        alert(`✅ Usuario creado con ID: ${data.id}`);
+        alert(`✅ Usuario creado con Exito`);
         console.log("Usuario creado:", data);
         navigate("/login");
       } else {

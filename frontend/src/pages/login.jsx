@@ -25,11 +25,7 @@ const handleSubmit = async (e) => {
     console.log("Usuario logueado:", result.data.usuario);
 
     // Guarda correctamente el usuario en localStorage
-    localStorage.setItem("user", JSON.stringify({
-      id: result.data.usuario.id,    // <- CORREGIDO
-      nombre: result.data.usuario.nombre,
-      email: result.data.usuario.email
-    }));
+    localStorage.setItem("user", JSON.stringify(result.data.usuario));
 
     navigate("/home");
   } else {

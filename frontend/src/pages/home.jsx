@@ -176,11 +176,19 @@ const Home = () => {
         <h1 className="home-welcome-text">
           Bienvenido, <span className="home-user-name">{user?.nombre || "$fulanito name"}</span>
         </h1>
-        <div className="home-user-icon">
+        <div
+          className="home-user-icon"
+          onClick={() => navigate("/ProfilePage")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate("/ProfilePage"); }}
+          title="Ver perfil"
+          style={{ cursor: "pointer" }}
+        >
           {user?.perfil?.avatar_url ? (
-            <img 
-              src={user.perfil.avatar_url} 
-              alt="Avatar" 
+            <img
+              src={user.perfil.avatar_url}
+              alt={user?.nombre || "Avatar"}
               className="home-avatar"
             />
           ) : (
