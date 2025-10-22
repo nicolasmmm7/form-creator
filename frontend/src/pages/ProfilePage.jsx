@@ -117,31 +117,53 @@ const ProfilePage = () => {
     setMessage({ type: '', text: '' });
 
     try {
-      // Detectar proveedor: prioridad localStorage -> user object
       const signinProvider = localStorage.getItem("signin_provider") || user?.provider || user?.auth_provider || "normal";
       const tokenForUpdate = signinProvider === "google" ? localStorage.getItem("idToken") : null;
 
-      // Validaciones locales:
-      // - Si se ingresó teléfono, debe ser exactamente 10 dígitos (solo números).
-      const empresaInput = editedData.empresa ? { ...editedData.empresa } : null;
-      if (empresaInput && empresaInput.telefono) {
+      // Crear copias de los objetos para no modificar el estado directamente
+      const empresaInput = editedData.empresa ? { ...editedData.empresa } : {};
+      const perfilInput = editedData.perfil ? { ...editedData.perfil } : {};
+      const payload = { ...editedData };
+
+      // Validar teléfono si existe
+      if (empresaInput.telefono) {
         const digits = String(empresaInput.telefono).replace(/\D/g, "");
         if (digits.length !== 10) {
           setMessage({ type: 'error', text: 'El teléfono debe tener exactamente 10 dígitos.' });
           setSaving(false);
           return;
         }
-        empresaInput.telefono = digits; // enviar solo dígitos
+        empresaInput.telefono = digits;
       }
 
-      // - Si el NIT está vacío ('' o solo espacios), no lo incluyas en el payload
-      if (empresaInput && (empresaInput.nit === "" || (typeof empresaInput.nit === "string" && empresaInput.nit.trim() === ""))) {
-        delete empresaInput.nit;
-      }
+      // Limpiar campos vacíos de empresa
+      Object.keys(empresaInput).forEach(key => {
+        if (empresaInput[key] === "" || (typeof empresaInput[key] === "string" && empresaInput[key].trim() === "")) {
+          delete empresaInput[key];
+        }
+      });
 
-      // Construir payload final: tomar editedData y sobrescribir empresa si aplica
-      const payload = { ...editedData };
-      if (empresaInput) payload.empresa = empresaInput;
+      // Limpiar campos vacíos de perfil
+      Object.keys(perfilInput).forEach(key => {
+        if (perfilInput[key] === "" || (typeof perfilInput[key] === "string" && perfilInput[key].trim() === "")) {
+          delete perfilInput[key];
+        }
+      });
+
+      // Limpiar campos vacíos del payload principal
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === "" || (typeof payload[key] === "string" && payload[key].trim() === "")) {
+          delete payload[key];
+        }
+      });
+
+      // Asignar objetos limpios al payload solo si tienen propiedades
+      if (Object.keys(empresaInput).length > 0) {
+        payload.empresa = empresaInput;
+      }
+      if (Object.keys(perfilInput).length > 0) {
+        payload.perfil = perfilInput;
+      }
 
       const res = await updateUserData(user.id, payload, tokenForUpdate);
 
