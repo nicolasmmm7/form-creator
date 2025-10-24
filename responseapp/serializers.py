@@ -6,7 +6,7 @@ from .models import Respondedor, RespuestaFormulario, RespuestaPregunta
 from formapp.models import Formulario
 from formapp.serializers import PreguntaSerializer  # opcional para validaciones coherentes
 
-
+#obtener ip del cliente
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
@@ -132,6 +132,12 @@ class RespuestaFormularioSerializer(serializers.Serializer):
         ids = [r["pregunta_id"] for r in respuestas]
         if len(ids) != len(set(ids)):
             raise serializers.ValidationError("Las respuestas contienen preguntas duplicadas.")
+        
+        if form.configuracion and form.configuracion.fecha_limite:
+             if datetime.utcnow() > form.configuracion.fecha_limite:
+                raise serializers.ValidationError({
+            "formulario": "Este formulario ya no acepta respuestas (fecha límite superada)."
+        })
 
         # revisar que todas las preguntas requeridas estén presentes
         for p in preguntas_form.values():
@@ -260,12 +266,13 @@ class RespuestaFormularioSerializer(serializers.Serializer):
 
             # si respondedor fue creado solo por IP, podría haber existencias con ese mismo IP
             if respondedor_obj and respondedor_obj.ip_address:
-                other = RespuestaFormulario.objects(
-                    formulario=form,
-                    respondedor__ip_address=respondedor_obj.ip_address
-                ).first()
-                if other:
-                    raise serializers.ValidationError({"non_field_errors": "Ya existe una respuesta desde esta IP para el formulario."})
+                # Buscar manualmente todas las respuestas y comparar
+                respuestas_ip = RespuestaFormulario.objects(formulario=form)
+                for r in respuestas_ip:
+                    if r.respondedor and r.respondedor.ip_address == respondedor_obj.ip_address:
+                        raise serializers.ValidationError({
+                            "non_field_errors": "Ya existe una respuesta desde esta IP para el formulario."
+            })
 
         # construir objetos RespuestaPregunta embebidos
         respuesta_objs = []

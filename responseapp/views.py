@@ -4,6 +4,8 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
+from rest_framework import serializers
+
 from bson import ObjectId
 from .models import RespuestaFormulario, Respondedor
 from .serializers import RespuestaFormularioSerializer
@@ -57,9 +59,15 @@ class RespuestaListCreateAPI(APIView):
             return Response({"error": "Formulario no encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
         # validar que quien solicita sea el administrador del formulario (o staff si lo deseas)
-        if not is_admin_of_form(request.user, form):
+        """if not is_admin_of_form(request.user, form):   ESTA SE DEBE PONER PERO NO MIENTRAS SEA DE PRUEBA
             return Response({"error": "No autorizado. Solo el administrador puede listar respuestas."},
-                            status=status.HTTP_403_FORBIDDEN)
+                            status=status.HTTP_403_FORBIDDEN)"""
+        if not is_admin_of_form(request.user, form):
+            # ⚠️ Si el formulario no es privado, permite listar aunque no sea admin  MIENTRAS QUE SEA DE PRUEBA 
+            #DEJAR ESTE METODO PARA TRAER LOS FORMULARIOS SIN AUTENTIFICARSE COMO ADMIN
+            if getattr(form.configuracion, "privado", False):
+                return Response({"error": "No autorizado. Solo el administrador puede listar respuestas."},
+                                status=status.HTTP_403_FORBIDDEN)
 
         respuestas = RespuestaFormulario.objects(formulario=form)
         # serializar manualmente (podrías crear un serializer read-only si quieres)
@@ -100,8 +108,10 @@ class RespuestaListCreateAPI(APIView):
         serializer = RespuestaFormularioSerializer(data=request.data, context={"request": request})
         try:
             serializer.is_valid(raise_exception=True)
-        except Exception as e:
+        except serializers.ValidationError as ve:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # comprobar requisito de login del formulario
         form = serializer.validated_data.get("_form_obj")  # attach en validate()
@@ -145,8 +155,12 @@ class RespuestaDetailAPI(APIView):
             return Response({"error": "Respuesta no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
         # comprobar permiso admin sobre el formulario
+        """if not is_admin_of_form(request.user, r.formulario):  DEJAR ESTE DESPUES DE HACER LAS PRUEBAS
+            return Response({"error": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)"""
         if not is_admin_of_form(request.user, r.formulario):
-            return Response({"error": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)
+            if getattr(r.formulario.configuracion, "privado", False):
+                return Response({"error": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)
+
 
         out = {
             "id": str(r.id),

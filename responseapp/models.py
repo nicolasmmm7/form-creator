@@ -4,7 +4,7 @@ from mongoengine import Document, ReferenceField, DateTimeField, ListField, Embe
 
 class RespuestaPregunta(EmbeddedDocument):
     pregunta_id = IntField(required=True)
-    tipo = StringField(required=True, choices=('texto_libre', 'opcion_multiple', 'escala_numerica'))
+    tipo = StringField(required=True, choices=('texto_libre', 'opcion_multiple', 'escala_numerica', 'checkbox'))
     valor = ListField(StringField())  # Puede contener textos u opciones
     meta = {
         'collection': 'respuestaPreguntas'
