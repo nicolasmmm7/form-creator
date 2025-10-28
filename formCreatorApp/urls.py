@@ -20,8 +20,13 @@ from django.urls import path, include
 from usuarioapp.views import firebase_auth_sync
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # Rutas de cada app
     path('api/usuarios/', include('usuarioapp.urls')),
     path('api/formularios/', include('formapp.urls')),
+    path('api/respuestas/', include('responseapp.urls')),
+
+    # Firebase sync
     path('api/auth/firebase/', firebase_auth_sync, name='firebase_auth_sync'),
 ]
 
