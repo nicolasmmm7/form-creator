@@ -1,6 +1,7 @@
 // src/pages/CreateForm.jsx
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+
 
 const defaultQuestion = (id) => ({
   id,
@@ -14,10 +15,12 @@ const defaultQuestion = (id) => ({
 
 export default function CreateForm() {
   const navigate = useNavigate();
+  const { formId } = useParams();
   const [titulo, setTitulo] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [preguntas, setPreguntas] = useState([defaultQuestion(1)]);
   const [nextId, setNextId] = useState(2);
+  const [loading, setLoading] = useState(false); 
 
   // 🔧 Nueva configuración del formulario
   const [config, setConfig] = useState({
@@ -31,12 +34,60 @@ export default function CreateForm() {
 
 
   const user = JSON.parse(localStorage.getItem("user"));
+
+  //cargar datos del formulario si estamos en modo edición
+  useEffect(() => {
+    if (formId) {
+      cargarFormularioParaEditar();
+    }
+  }, [formId]);
+  
+  const cargarFormularioParaEditar = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/api/formularios/${formId}/`);
+      
+      if (!res.ok) {
+        throw new Error("No se pudo cargar el formulario");
+      }
+
+      const data = await res.json();
+      console.log("📋 Formulario cargado para editar:", data);
+
+      // Cargar datos del formulario
+      setTitulo(data.titulo);
+      setDescripcion(data.descripcion);
+      setPreguntas(data.preguntas || []);
+      
+      // Calcular el siguiente ID (máximo ID + 1)
+      const maxId = Math.max(...(data.preguntas?.map(p => p.id) || [0]));
+      setNextId(maxId + 1);
+
+      // Cargar configuración
+      if (data.configuracion) {
+        setConfig({
+          privado: data.configuracion.privado || false,
+          fecha_limite: data.configuracion.fecha_limite || "",
+          notificaciones_email: data.configuracion.notificaciones_email || false,
+          requerir_login: data.configuracion.requerir_login || false,
+          una_respuesta: data.configuracion.una_respuesta ?? true,
+          permitir_edicion: data.configuracion.permitir_edicion || false,
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error al cargar formulario:", error);
+      alert("Error al cargar el formulario para editar");
+      navigate("/home");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!user?.id) {
     alert("Debe iniciar sesión antes de crear un formulario");
     navigate("/login");
     return null;
-
-}
+  }
 
   const addQuestion = () => {
     setPreguntas((prev) => [...prev, defaultQuestion(nextId)]);
@@ -106,11 +157,24 @@ export default function CreateForm() {
     };
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/formularios/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      let res;
+
+      // 👇 NUEVO: Detectar si es creación o edición
+      if (formId) {
+        // EDICIÓN: Usar PUT
+        res = await fetch(`http://127.0.0.1:8000/api/formularios/${formId}/`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // CREACIÓN: Usar POST
+        res = await fetch("http://127.0.0.1:8000/api/formularios/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
 
       let data = null;
       try {
@@ -125,8 +189,9 @@ export default function CreateForm() {
         return;
       }
 
-      alert("✅ Formulario creado correctamente");
-      navigate("/home");
+      const mensaje = formId ? "✅ Formulario actualizado correctamente" : "✅ Formulario creado correctamente";
+    alert(mensaje);
+    navigate("/home");
     } catch (e) {
       console.error("❌ Error en handleSave:", e);
       alert("Fallo de conexión al crear formulario");
@@ -149,7 +214,7 @@ return (
     </div>
     {/* ---------------------- Sección principal ---------------------- */}
     <section className="create-section-main">
-      <h2>Crear formulario</h2>
+      <h2>{formId ? "Editar formulario" : "Crear formulario"}</h2>
       <label className="create-label">Título</label>
       <input
         className="create-input"
