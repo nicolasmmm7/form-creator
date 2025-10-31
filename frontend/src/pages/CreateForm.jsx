@@ -134,12 +134,8 @@ export default function CreateForm() {
       descripcion,
       administrador: user.id,
       configuracion: {
-        privado: false,
-        fecha_limite: null,
-        notificaciones_email: false,
-        requerir_login: false,
-        una_respuesta: true,
-        permitir_edicion: false,
+        ...config, // 👈 usa el estado actual del formulario
+        fecha_limite: config.fecha_limite || null, // por si viene vacío
       },
       preguntas: preguntas.map((p, i) => ({
         id: p.id,
