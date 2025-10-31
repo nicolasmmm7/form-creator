@@ -1,14 +1,17 @@
 // src/pages/AnswerForm.jsx
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import "../css/CreateForm.css"; // reutilizamos el mismo estilo
+import AuthModal from "../components/AuthModal"; //modal para cuando el form requiere login
 
 function AnswerForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [formulario, setFormulario] = useState(null);
   const [respuestas, setRespuestas] = useState({});
   const [mensaje, setMensaje] = useState("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     fetch(`http://127.0.0.1:8000/api/formularios/${id}/`)
@@ -16,6 +19,36 @@ function AnswerForm() {
       .then((data) => setFormulario(data))
       .catch((err) => console.error(err));
   }, [id]);
+
+  // Recuperar respuestas pendientes si hay (después de login)
+  useEffect(() => {
+    const pending = localStorage.getItem(`pending_answers_${id}`);
+    if (pending) {
+      try {
+        setRespuestas(JSON.parse(pending));
+        // opcional: eliminar pending si ya lo quieras limpiar
+        // localStorage.removeItem(`pending_answers_${id}`);
+      } catch (e) {}
+    }
+  }, [id]);
+
+  // Auto-mostrar modal si el formulario requiere login y no hay user
+  useEffect(() => {
+    if (!formulario) return;
+    const requiereLogin = formulario.configuracion?.requerir_login;
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    if (requiereLogin && !user) {
+      setShowAuthModal(true);
+    }
+  }, [formulario]);
+
+  // Validación: devuelve true si hay un usuario o no se requiere login
+  function validateLogin() {
+    const requiereLogin = formulario?.configuracion?.requerir_login;
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    return !requiereLogin || !!user;
+  }
+
 
   const handleChange = (pid, tipo, value) => {
     setRespuestas((prev) => ({
@@ -28,6 +61,14 @@ function AnswerForm() {
     e.preventDefault();
 
     if (!formulario) return;
+
+    // Si requiere login y no está logueado -> abrir modal y guardar respuestas
+    if (!validateLogin()) {
+      // guarda estado actual para recuperarlo luego
+      localStorage.setItem(`pending_answers_${id}`, JSON.stringify(respuestas));
+      setShowAuthModal(true);
+      return;
+    }
 
     const payload = {
       formulario: id,
@@ -46,21 +87,29 @@ function AnswerForm() {
       body: JSON.stringify(payload),
     });
 
+
+
     const data = await res.json();
     if (res.ok) {
         setMensaje("✅ ¡Respuesta enviada correctamente!");
+        localStorage.removeItem(`pending_answers_${id}`); //limpiar pending si existía (esto lo agregó angely perdón si esta mal)
         const userData = JSON.parse(localStorage.getItem("user"));
-        setTimeout(() => {
+        // Redirigir según si hay user o no
         if (userData?.id) {
             navigate("/home");
         } else {
             navigate("/thankyou");
         }
-        }, 2000);
+      } else if (res.status === 401) {
+      // backend puede rechazar con 401 -> abrir modal
+      localStorage.setItem(`pending_answers_${id}`, JSON.stringify(respuestas));
+      setShowAuthModal(true);
     } else {
-        setMensaje(`⚠️ Error: ${data.error || JSON.stringify(data)}`);
+      setMensaje(`⚠️ Error: ${data.error || JSON.stringify(data)}`);
     }
-    };
+  };
+
+
 
   if (!formulario) return <div className="create-section-main">Cargando formulario...</div>;
 
@@ -201,6 +250,25 @@ function AnswerForm() {
             </label>
         </div>
         </aside>
+
+         {/* Modal de autenticación */}
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          onLogin={() => {
+            // Guardar pending y redirigir al login con next
+            localStorage.setItem(`pending_answers_${id}`, JSON.stringify(respuestas));
+            navigate(`/login?next=/form/${id}/answer`);
+          }}
+          onRegister={() => {
+            localStorage.setItem(`pending_answers_${id}`, JSON.stringify(respuestas));
+            navigate(`/register?next=/form/${id}/answer`);
+
+          }}
+          allowGuest={!formulario.configuracion?.requerir_login && !formulario.configuracion?.privado}
+        />
+      )}
+
     </main>
   );
 }

@@ -1,0 +1,31 @@
+.authmodal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+}
+.authmodal-card {
+  width: 90%;
+  max-width: 420px;
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+  position: relative;
+}
+.authmodal-close {
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  border: none;
+  background: transparent;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+.authmodal-actions { display:flex; gap: 0.5rem; margin-top: 1rem; flex-wrap:wrap; }
+.authmodal-btn { padding: 0.5rem 0.75rem; border-radius: 8px; cursor: pointer; }
+.authmodal-btn.outline { border: 1px solid #ccc; background: transparent; }
+.authmodal-btn.ghost { background: transparent; color: #555; }

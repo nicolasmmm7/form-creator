@@ -3,13 +3,16 @@
 //login tradicional
 import React, { useState } from "react";
 import { loginWithGoogle } from "../firebase";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { loginUsuario, syncFirebaseUser } from "../api/usuario.api";
 
 
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+const params = new URLSearchParams(location.search);
+const next = params.get("next") || "/home";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,7 +30,7 @@ const handleSubmit = async (e) => {
     // Guarda correctamente el usuario en localStorage
     localStorage.setItem("user", JSON.stringify(result.data.usuario));
 
-    navigate("/home");
+    navigate(next);
   } else {
     alert("❌ Error: " + (result.data.error || "Credenciales incorrectas"));
   }
@@ -77,7 +80,7 @@ const handleSubmit = async (e) => {
         localStorage.setItem('idToken', idToken);
         
         alert(`✅ Bienvenido ${resultado.user.nombre}!`);
-        navigate("/home");
+        navigate(next);
       } else {
         alert("Error al iniciar sesión con Google. Revisa la consola.");
         console.error("Error en respuesta del backend:", resultado);
@@ -159,7 +162,7 @@ const handleSubmit = async (e) => {
             <Link to="/password-reset">¿Olvidaste tu contraseña?</Link>
           </p>
           <p id="login-texto-registro">
-            ¿Sin cuenta? <Link to="/register">Regístrate aquí</Link>
+            ¿Sin cuenta? <Link to={`/register?next=${encodeURIComponent(next)}`}>Regístrate aquí</Link>
           </p>
         </form>
       </section>
