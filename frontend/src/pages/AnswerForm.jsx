@@ -4,6 +4,28 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import "../css/CreateForm.css"; // reutilizamos el mismo estilo
 import AuthModal from "../components/AuthModal"; //modal para cuando el form requiere login
 
+
+function Modal({ visible, title, message, onClose, actionLabel, onAction }) {
+  if (!visible) return null;
+  return (
+    <div className="modal-overlay">
+      <div className="modal-container">
+        <h3>{title}</h3>
+        <p>{message}</p>
+        <div className="modal-actions">
+          <button className="modal-btn-close" onClick={onClose}>Cerrar</button>
+          {onAction && (
+            <button className="modal-btn-action" onClick={onAction}>
+              {actionLabel || "Acción"}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function AnswerForm() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -13,12 +35,45 @@ function AnswerForm() {
   const [mensaje, setMensaje] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  useEffect(() => {
-    fetch(`http://127.0.0.1:8000/api/formularios/${id}/`)
-      .then((res) => res.json())
-      .then((data) => setFormulario(data))
-      .catch((err) => console.error(err));
-  }, [id]);
+
+ useEffect(() => {
+  fetch(`http://127.0.0.1:8000/api/formularios/${id}/`)
+    .then(res => res.json())
+    .then(data => {
+      setFormulario(data);
+
+      const hoy = new Date();
+      const fechaLimite = data.configuracion?.fecha_limite
+        ? new Date(data.configuracion.fecha_limite)
+        : null;
+
+      // 1️⃣ Formulario cerrado por fecha límite
+      if (fechaLimite && fechaLimite < hoy) {
+        setModal({
+          visible: true,
+          title: "Formulario cerrado 🕒",
+          message: "Este formulario ya no acepta respuestas porque la fecha límite ha pasado.",
+          action: () => navigate("/home"),
+        });
+        return;
+      }
+
+      // 2️⃣ Formulario no publicado (privado = true)
+      if (data.configuracion?.privado === true) {
+        setModal({
+            visible: true,
+            title: "Formulario no disponible 🚫",
+            message: "El creador ha despublicado este formulario. Ya no puedes enviar respuestas.",
+            action: () => navigate("/home"),
+        });
+        return;
+        }
+
+      
+    })
+    .catch(err => console.error(err));
+}, [id, navigate]);
+
 
   // Recuperar respuestas pendientes si hay (después de login)
   useEffect(() => {
@@ -111,7 +166,31 @@ function AnswerForm() {
 
 
 
+    const [modal, setModal] = useState({
+        visible: false,
+        title: "",
+        message: "",
+        action: null,
+    });
+
+
+
+
   if (!formulario) return <div className="create-section-main">Cargando formulario...</div>;
+
+  if (modal.visible) {
+  return (
+    <Modal
+      visible={modal.visible}
+      title={modal.title}
+      message={modal.message}
+      onClose={() => navigate("/home")}
+      onAction={modal.action}
+      actionLabel="Ir"
+    />
+  );
+}
+
 
   return (
     <main className="create-form-main">

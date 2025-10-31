@@ -152,20 +152,24 @@ const Home = () => {
   };
 
   // 🎨 Determinar estado del formulario
-  const obtenerEstado = (form) => {
-    if (form.configuracion?.fecha_limite) {
-      const fechaLimite = new Date(form.configuracion.fecha_limite);
-      if (fechaLimite < new Date()) {
-        return "CERRADO";
-      }
+const obtenerEstado = (form) => {
+  if (form.configuracion?.fecha_limite) {
+    const fechaLimite = new Date(form.configuracion.fecha_limite);
+    if (fechaLimite < new Date()) {
+      return "CERRADO";
     }
-    
-    if (form.configuracion?.privado || !form.configuracion?.requerir_login) {
-      return "BORRADOR";
-    }
-    
-    return "PUBLICADO";
-  };
+  }
+
+  // 📌 Si privado = true → no publicado
+  if (form.configuracion?.privado) {
+    return "BORRADOR";
+  }
+
+  // 📌 Si privado = false → publicado
+  return "PUBLICADO";
+};
+
+
 
 
   // 🔗 Compartir formulario
@@ -182,6 +186,48 @@ const handleCompartir = async (id) => {
 
   setMenuAbierto(null);
 };
+
+const handleTogglePublicar = async (form) => {
+  const estaPublicado = form.configuracion?.privado === false;
+  const nuevoPrivado = estaPublicado ? true : false;
+
+  const confirmar = window.confirm(
+    estaPublicado
+      ? `¿Deseas despublicar el formulario "${form.titulo}"?`
+      : `¿Deseas publicar el formulario "${form.titulo}"?`
+  );
+
+  if (!confirmar) return;
+
+  try {
+    const actualizado = {
+      ...form,
+      configuracion: {
+        ...form.configuracion,
+        privado: nuevoPrivado, // 🔁 si es publicado → privado = false
+      },
+    };
+
+    const res = await fetch(`http://127.0.0.1:8000/api/formularios/${form.id}/`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(actualizado),
+    });
+
+    if (!res.ok) throw new Error("Error al actualizar estado");
+
+    alert(
+      !nuevoPrivado
+        ? "✅ Formulario publicado correctamente"
+        : "📤 Formulario despublicado"
+    );
+    cargarFormularios(user.id);
+  } catch (error) {
+    console.error("❌ Error al cambiar estado:", error);
+    alert("No se pudo actualizar el estado del formulario");
+  }
+};
+
 
 
 
@@ -317,6 +363,18 @@ const handleCompartir = async (id) => {
                 <p className="home-card-info">
                   {form.preguntas?.length || 0} preguntas
                 </p>
+
+                {/* Botón Publicar / Despublicar */}
+              <div className="home-card-footer">
+                <button
+                  className={`home-btn-publicar ${
+                    estado === "PUBLICADO" ? "despublicar" : "publicar"
+                  }`}
+                  onClick={() => handleTogglePublicar(form)}
+                >
+                  {estado === "PUBLICADO" ? "Despublicar" : "Publicar"}
+                </button>
+              </div>
               </div>
             );
           })}

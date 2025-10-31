@@ -141,7 +141,7 @@ body:has(.home-main) {
 
 .home-badge-publicado {
   background-color: var(--color-primario);
-  color: #33b04e;
+  color: #effaf1;
 }
 
 .home-badge-borrador {
@@ -512,4 +512,42 @@ body::before {
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center center;
+}
+
+/* ===== Botón Publicar / Despublicar ===== */
+.home-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 1rem 1rem 1rem;
+}
+
+.home-btn-publicar {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.home-btn-publicar.publicar {
+  background-color: #10b981; /* verde */
+  color: white;
+}
+
+.home-btn-publicar.publicar:hover {
+  background-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+}
+
+.home-btn-publicar.despublicar {
+  background-color: #fbbf24; /* amarillo */
+  color: white;
+}
+
+.home-btn-publicar.despublicar:hover {
+  background-color: #f59e0b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(251, 191, 36, 0.3);
 }
