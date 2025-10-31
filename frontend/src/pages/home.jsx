@@ -64,11 +64,10 @@ const Home = () => {
 
   // ✏️ Editar formulario
   const handleEditar = (id) => {
-    console.log("✏️ Editar formulario:", id);
-    alert("🚧 Funcionalidad de edición en desarrollo");
-    setMenuAbierto(null);
-  };
-
+  console.log("✏️ Editar formulario:", id);
+  navigate(`/create/${id}`); // 👈 Navegar a CreateForm con ID
+  setMenuAbierto(null);
+};
   // 📊 Ver analíticas
   const handleAnaliticas = (id) => {
     console.log("📊 Ver analíticas:", id);

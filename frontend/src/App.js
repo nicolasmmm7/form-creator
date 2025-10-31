@@ -28,7 +28,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         
         <Route path="/home" element={<Home />} />
-        <Route path="/create" element={<CreateForm />} /> 
+        <Route path="/create/:formId?" element={<CreateForm />} />
         <Route path="/password-reset" element={<PasswordReset />} />
         <Route path="/ProfilePage" element={<ProfilePage />} />
       </Routes>
