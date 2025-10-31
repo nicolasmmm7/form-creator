@@ -168,6 +168,23 @@ const Home = () => {
   };
 
 
+  // 🔗 Compartir formulario
+const handleCompartir = async (id) => {
+  const enlace = `${window.location.origin}/form/${id}/answer`;
+
+  try {
+    await navigator.clipboard.writeText(enlace);
+    alert("🔗 Enlace copiado al portapapeles:\n" + enlace);
+  } catch (err) {
+    console.error("❌ No se pudo copiar:", err);
+    alert("⚠️ No se pudo copiar el enlace");
+  }
+
+  setMenuAbierto(null);
+};
+
+
+
   return (
     <main className="home-main">
       {/* Header */}
@@ -268,6 +285,16 @@ const Home = () => {
                         >
                           ✏️ Editar
                         </button>
+
+                         {/* 🔗 NUEVA OPCIÓN DE COMPARTIR */}
+                          {obtenerEstado(form) === "PUBLICADO" && (
+                            <button
+                              className="home-menu-item"
+                              onClick={() => handleCompartir(form.id)}
+                            >
+                              📤 Compartir enlace
+                            </button>
+                          )}
                       </div>
                     )}
                   </div>

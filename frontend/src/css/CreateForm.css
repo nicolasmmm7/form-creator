@@ -861,3 +861,26 @@ body::before {
   background-size: cover;
   background-position: center center;
 }
+
+/* ======= Encabezado del formulario de respuesta ======= */
+.answer-header {
+  background: #d7fae4;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.answer-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-titulo);
+  margin-bottom: 0.5rem;
+}
+
+.answer-description {
+  font-size: 1rem;
+  color: var(--color-texto-secundario);
+  line-height: 1.6;
+  max-width: 800px;
+}
