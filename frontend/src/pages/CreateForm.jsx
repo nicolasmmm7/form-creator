@@ -400,7 +400,7 @@ return (
       <h3 className="create-sidebar-title">⚙️ Configuración</h3>
 
       <label className="create-config-label">
-        Privado:
+        Borrador:
         <input
           className="create-checkbox"
           type="checkbox"
