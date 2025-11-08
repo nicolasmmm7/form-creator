@@ -293,3 +293,25 @@ class RespuestaFormularioSerializer(serializers.Serializer):
         )
         rf.save()
         return rf
+    #Update para editar respuesta ------------------------
+    def update(self, instance, validated_data):
+        # Actualizar respuestas y tiempo de completación
+        if "respuestas" in validated_data:
+            # Construir lista de objetos RespuestaPregunta
+            respuesta_objs = []
+            for r in validated_data["respuestas"]:
+                rp = RespuestaPregunta(
+                    pregunta_id=r["pregunta_id"],
+                    tipo=r["tipo"],
+                    valor=r.get("valor", [])
+                )
+                respuesta_objs.append(rp)
+            instance.respuestas = respuesta_objs
+        if "tiempo_completacion" in validated_data:
+            instance.tiempo_completacion = validated_data["tiempo_completacion"]
+        # (Opcional: actualizar fecha_envio o respuestas de respondedor si se permite)
+
+        instance.save()
+        return instance
+    
+    

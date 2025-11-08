@@ -3,9 +3,24 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import "../css/CreateForm.css"; // reutilizamos el mismo estilo
 import AuthModal from "../components/AuthModal"; //modal para cuando el form requiere login
+import AnswerEditModal from "../components/AnswerEditModal";
 
 
-function Modal({ visible, title, message, onClose, actionLabel, onAction }) {
+
+function AnswerForm() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [formulario, setFormulario] = useState(null);
+  const [respuestas, setRespuestas] = useState({});
+  const [mensaje, setMensaje] = useState("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [existingResponse, setExistingResponse] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalDismissed, setModalDismissed] = useState(false);
+
+  function Modal({ visible, title, message, onClose, actionLabel, onAction }) {
   if (!visible) return null;
   return (
     <div className="modal-overlay">
@@ -25,22 +40,44 @@ function Modal({ visible, title, message, onClose, actionLabel, onAction }) {
   );
 }
 
+// === Función para precargar respuestas existentes ===
+  const precargarRespuestas = (respuestaExistente) => {
+    if (!respuestaExistente || !respuestaExistente.respuestas) return;
 
-function AnswerForm() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [formulario, setFormulario] = useState(null);
-  const [respuestas, setRespuestas] = useState({});
-  const [mensaje, setMensaje] = useState("");
-  const [showAuthModal, setShowAuthModal] = useState(false);
+    const respuestasPrecargadas = {};
+    respuestaExistente.respuestas.forEach((r) => {
+      respuestasPrecargadas[r.pregunta_id] = {
+        tipo: r.tipo,
+        valor: r.valor?.length > 1 ? r.valor : r.valor[0],
+      };
+    });
 
+    setRespuestas(respuestasPrecargadas);
+  };
 
+ 
  useEffect(() => {
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const ip = localStorage.getItem("client_ip") || "frontend-ip";
   fetch(`http://127.0.0.1:8000/api/formularios/${id}/`)
     .then(res => res.json())
     .then(data => {
       setFormulario(data);
+
+    //verificar si ya respondio
+    fetch(`http://127.0.0.1:8000/api/respuestas/?formulario=${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const match = data.find((r) =>
+          user?.email
+            ? r.respondedor.email === user.email
+            : r.respondedor.ip_address === ip
+        );
+        if (match) {
+          setExistingResponse(match);
+          setShowModal(true);
+        }
+      });
 
       const hoy = new Date();
       const fechaLimite = data.configuracion?.fecha_limite
@@ -136,8 +173,14 @@ function AnswerForm() {
       })),
     };
 
-    const res = await fetch("http://127.0.0.1:8000/api/respuestas/", {
-      method: "POST",
+    const url = isEditing
+  ? `http://127.0.0.1:8000/api/respuestas/${existingResponse.id}/`
+  : "http://127.0.0.1:8000/api/respuestas/";
+  const method = isEditing ? "PUT" : "POST";
+
+
+    const res = await fetch(url, {
+      method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
@@ -153,7 +196,7 @@ function AnswerForm() {
         if (userData?.id) {
             navigate("/home");
         } else {
-            navigate("/thankyou");
+            navigate(`/thankyou?edit=${isEditing}`);
         }
       } else if (res.status === 401) {
       // backend puede rechazar con 401 -> abrir modal
@@ -307,6 +350,60 @@ function AnswerForm() {
             {mensaje}
           </p>
         )}
+
+       <AnswerEditModal
+  visible={showModal}
+  onClose={() => {
+    setShowModal(false);
+    setModalDismissed(true); // evita que el useEffect lo vuelva a abrir
+  }}
+>
+  {existingResponse && (
+    <>
+      <h2 className="text-xl font-semibold mb-2">Ya has respondido este formulario</h2>
+
+      {formulario?.configuracion?.permitir_edicion ? (
+        <>
+          <p className="mb-4">Puedes editar tu respuesta anterior. ¿Deseas hacerlo ahora?</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setIsEditing(true);
+                precargarRespuestas(existingResponse);
+                setShowModal(false);
+              }}
+              className="bg-blue-500 text-white px-4 py-2 rounded"
+            >
+              Editar mi respuesta
+            </button>
+            <button
+              onClick={() => {
+                setModalDismissed(true);
+                navigate("/")}}
+              className="bg-gray-400 text-white px-4 py-2 rounded"
+              
+            >
+              Cancelar
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="mb-4">
+            Ya completaste este formulario y no se permiten nuevas respuestas.
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="bg-gray-500 text-white px-4 py-2 rounded"
+          >
+            Volver al inicio
+          </button>
+        </>
+      )}
+    </>
+  )}
+</AnswerEditModal>
+
       </section>
 
       {/* ===== Panel lateral ===== */}

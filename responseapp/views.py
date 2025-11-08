@@ -5,7 +5,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from rest_framework import serializers
-
 from bson import ObjectId
 from .models import RespuestaFormulario, Respondedor
 from .serializers import RespuestaFormularioSerializer
@@ -187,3 +186,32 @@ class RespuestaDetailAPI(APIView):
             return Response({"error": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)
         r.delete()
         return Response({"message": "Respuesta eliminada."}, status=status.HTTP_204_NO_CONTENT)
+
+#agregado: para editar respuestas-----------------------------
+    def put(self, request, id):
+        r = self.get_object(id)
+        if not r:
+            return Response({"error": "Respuesta no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        form = r.formulario
+        if not getattr(form.configuracion, "permitir_edicion", False):
+            return Response({"error": "Edición no permitida."}, status=status.HTTP_403_FORBIDDEN)
+
+        user = getattr(request, "user", None)
+        owner_match = False
+        if user and getattr(user, "is_authenticated", False):
+            if getattr(r.respondedor, "email", None) and getattr(user, "email", None) == r.respondedor.email:
+                owner_match = True
+
+        if getattr(form.configuracion, "requerir_login", False) and not owner_match and not is_admin_of_form(user, form):
+            return Response({"error": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = RespuestaFormularioSerializer(instance=r, data=request.data, context={"request": request})
+        try:
+            serializer.is_valid(raise_exception=True)
+            rf = serializer.save()
+            return Response({"message": "Respuesta actualizada.", "id": str(rf.id)}, status=status.HTTP_200_OK)
+        except serializers.ValidationError as ve:
+            return Response(ve.detail, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
