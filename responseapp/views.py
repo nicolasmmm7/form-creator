@@ -9,6 +9,8 @@ from bson import ObjectId
 from .models import RespuestaFormulario, Respondedor
 from .serializers import RespuestaFormularioSerializer
 from formapp.models import Formulario
+from mongoengine.errors import DoesNotExist
+
 
 
 def is_admin_of_form(user, form):
@@ -72,15 +74,21 @@ class RespuestaListCreateAPI(APIView):
         # serializar manualmente (podrías crear un serializer read-only si quieres)
         out = []
         for r in respuestas:
+            try:
+                resp = r.respondedor
+                resp_info = {
+                    "id": str(resp.id) if resp else None,
+                    "ip_address": getattr(resp, "ip_address", None),
+                    "email": getattr(resp, "email", None),
+                    "nombre": getattr(resp, "nombre", None)
+                }
+            except DoesNotExist:
+                resp_info = {"id": None, "ip_address": None, "email":None, "nombre": None}
+            
             out.append({
                 "id": str(r.id),
                 "formulario": str(r.formulario.id),
-                "respondedor": {
-                    "id": str(r.respondedor.id),
-                    "ip_address": r.respondedor.ip_address,
-                    "email": r.respondedor.email,
-                    "nombre": r.respondedor.nombre
-                },
+                "respondedor": resp_info,
                 "fecha_envio": r.fecha_envio,
                 "tiempo_completacion": r.tiempo_completacion,
                 "respuestas": [
@@ -90,6 +98,8 @@ class RespuestaListCreateAPI(APIView):
         return Response(out, status=status.HTTP_200_OK)
 
     def post(self, request):
+        import traceback
+
         """
         Crear una respuesta.
         Payload ejemplo:
@@ -132,6 +142,7 @@ class RespuestaListCreateAPI(APIView):
         except serializers.ValidationError as ve:
             return Response(ve.detail, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            traceback.print_exc()   # -> ver la traza en consola
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -199,9 +210,35 @@ class RespuestaDetailAPI(APIView):
 
         user = getattr(request, "user", None)
         owner_match = False
-        if user and getattr(user, "is_authenticated", False):
-            if getattr(r.respondedor, "email", None) and getattr(user, "email", None) == r.respondedor.email:
+
+        #si el request.user está autenticado con el email entonces es el owner
+        try:
+            if user and getattr(user, "is_authenticated", False):
+                if getattr(r.respondedor, "email", None) and getattr (user, "email", None) == r.respondedor.email:
+                    owner_match= True
+
+        # si usa el google_id
+            if not owner_match and getattr (user, "google_id", None) and getattr(r.respondedor, "google_id", None):
+                if str(user.google_id) == str(r.respondedor.google_id):
+                    owner_match= True
+
+        
+        except Exception:
+            #si r.respondedor está corrupto o eliminado
+            owner_match = False
+
+        # permitir que el front provea respondedor del payload
+        payload_respondedor = request.data.get("respondedor") or {}
+        payload_email = payload_respondedor.get("email")
+        payload_google = payload_respondedor.get("google_id")
+
+        try:
+            if payload_email and getattr(r.respondedor, "email", None) and payload_email == r.respondedor.email:
                 owner_match = True
+            if payload_google and getattr(r.respondedor, "google_id", None) and str(payload_google) == str(r.respondedor.google_id):
+                owner_match = True
+        except Exception:
+            pass
 
         if getattr(form.configuracion, "requerir_login", False) and not owner_match and not is_admin_of_form(user, form):
             return Response({"error": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)

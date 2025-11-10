@@ -79,6 +79,11 @@ const handleSubmit = async (e) => {
         localStorage.setItem('user', JSON.stringify(resultado.user));
         localStorage.setItem('idToken', idToken);
         
+        // 🧹 Limpia cualquier respondedor anterior (evita mezcla de cuentas)
+      localStorage.removeItem("respondedorId");
+      localStorage.removeItem("client_ip");
+      // 
+ 
         alert(`✅ Bienvenido ${resultado.user.nombre}!`);
         navigate(next);
       } else {

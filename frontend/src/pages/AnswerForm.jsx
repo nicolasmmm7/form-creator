@@ -19,6 +19,7 @@ function AnswerForm() {
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalDismissed, setModalDismissed] = useState(false);
+  
 
   function Modal({ visible, title, message, onClose, actionLabel, onAction }) {
   if (!visible) return null;
@@ -58,7 +59,7 @@ function AnswerForm() {
  
  useEffect(() => {
   const user = JSON.parse(localStorage.getItem("user") || "null");
-  const ip = localStorage.getItem("client_ip") || "frontend-ip";
+  const ip = localStorage.getItem("client_ip") || "";
   fetch(`http://127.0.0.1:8000/api/formularios/${id}/`)
     .then(res => res.json())
     .then(data => {
@@ -66,18 +67,35 @@ function AnswerForm() {
 
     //verificar si ya respondio
     fetch(`http://127.0.0.1:8000/api/respuestas/?formulario=${id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const match = data.find((r) =>
-          user?.email
-            ? r.respondedor.email === user.email
-            : r.respondedor.ip_address === ip
-        );
-        if (match) {
-          setExistingResponse(match);
-          setShowModal(true);
-        }
-      });
+      .then(res => {
+          if (!res.ok) throw new Error(`Error ${res.status}`);
+          return res.json();
+        })
+        .then(data => {
+          console.log("📋 Respuestas obtenidas:", data);
+
+          // Validamos que haya respuestas
+          if (!Array.isArray(data) || data.length === 0) {
+            console.log("⚠️ No hay respuestas previas en el servidor.");
+            return;
+          }
+
+          // Buscamos coincidencia por email o IP
+          const match = data.find(r => {
+            if (!r.respondedor) return false;
+            const emailMatch = user?.email && r.respondedor.email === user.email;
+            const ipMatch = !user?.email && r.respondedor.ip_address === ip;
+            return emailMatch || ipMatch;
+          });
+
+          console.log("🔹 Resultado de match:", match);
+
+          if (match) {
+            setExistingResponse(match);
+            setShowModal(true);
+          }
+        })
+        .catch(err => console.error("❌ Error al verificar respuestas:", err));
 
       const hoy = new Date();
       const fechaLimite = data.configuracion?.fecha_limite
@@ -153,6 +171,9 @@ function AnswerForm() {
     e.preventDefault();
 
     if (!formulario) return;
+    
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    const ip = localStorage.getItem("client_ip") || "";
 
     // Si requiere login y no está logueado -> abrir modal y guardar respuestas
     if (!validateLogin()) {
@@ -163,28 +184,35 @@ function AnswerForm() {
     }
 
     const payload = {
-      formulario: id,
-      respondedor: { ip_address: "frontend-ip" },
-      tiempo_completacion: 30,
-      respuestas: Object.entries(respuestas).map(([pid, { tipo, valor }]) => ({
-        pregunta_id: Number(pid),
-        tipo,
-        valor: Array.isArray(valor) ? valor : [valor],
-      })),
-    };
+  formulario: id,
+  respondedor: {
+    ip_address: ip,
+    ...(user?.email ? { email: user.email } : {}),
+    ...(user?.nombre ? { nombre: user.nombre } : {}),
+    ...(user?.uid ? { google_id: user.uid } : {}), // importante
+  },
+  tiempo_completacion: 30,
+  respuestas: Object.entries(respuestas).map(([pid, { tipo, valor }]) => ({
+    pregunta_id: Number(pid),
+    tipo,
+    valor: Array.isArray(valor) ? valor : [valor],
+  })),
+};
 
-    const url = isEditing
-  ? `http://127.0.0.1:8000/api/respuestas/${existingResponse.id}/`
-  : "http://127.0.0.1:8000/api/respuestas/";
+  console.log("📤 Enviando payload al backend:", payload);
+
+  // Si ya tiene una respuesta existente, es edición → PUT
+  const url = isEditing
+    ? `http://127.0.0.1:8000/api/respuestas/${existingResponse.id}/`
+    : "http://127.0.0.1:8000/api/respuestas/";
   const method = isEditing ? "PUT" : "POST";
 
-
+  try {
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-
 
 
     const data = await res.json();
@@ -205,8 +233,11 @@ function AnswerForm() {
     } else {
       setMensaje(`⚠️ Error: ${data.error || JSON.stringify(data)}`);
     }
+  }catch (err) {
+    console.error("❌ Error al enviar respuesta:", err);
+    setMensaje("⚠️ Error de conexión con el servidor.");
+  }
   };
-
 
 
     const [modal, setModal] = useState({
