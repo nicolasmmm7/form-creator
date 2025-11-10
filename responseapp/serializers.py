@@ -309,8 +309,6 @@ class RespuestaFormularioSerializer(serializers.Serializer):
                     respondedor = Respondedor.objects(ip_address=respondedor_obj.ip_address).first()
                     if respondedor:
                         exists = RespuestaFormulario.objects(formulario=form, respondedor=respondedor).first()
-        else:
-            exists = None
 
             if exists:
                 #si permite editar, actualizamos la respuesta existente
@@ -330,7 +328,9 @@ class RespuestaFormularioSerializer(serializers.Serializer):
                     return exists
                     
                 # si no permite edicion ---> error 
-                raise serializers.ValidationError({"non_field_errors": "Ya existe una respuesta registrada para este formulario"})
+                raise serializers.ValidationError({
+                    "non_field_errors": "Ya existe una respuesta registrada para este formulario"
+                })
             
 
             # si respondedor fue creado solo por IP, podría haber existencias con ese mismo IP
@@ -360,6 +360,14 @@ class RespuestaFormularioSerializer(serializers.Serializer):
             tiempo_completacion=tiempo,
             respuestas=respuesta_objs
         )
+
+        if config and getattr(config, "una_respuesta", False):
+            existing = RespuestaFormulario.objects(formulario=form, respondedor=respondedor_obj).first()
+            if existing:
+                raise serializers.ValidationError({
+            "non_field_errors": "Este formulario solo admite una respuesta por persona."
+        })
+
         rf.save()
         return rf
     

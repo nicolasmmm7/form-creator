@@ -1,28 +1,43 @@
-// src/components/Modal.jsx
 import React from "react";
-import "../css/CreateForm.css";
+import "../css/AnswerEditModal.css";
 
-const AnswerEditModal = ({ visible, title, message, onClose, actionLabel, onAction, children }) => {
+const AnswerEditModal = ({
+  visible,
+  title,
+  message,
+  onClose,
+  onAction,
+  actionLabel,
+  children,
+}) => {
   if (!visible) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-container">
-        {title && <h3>{title}</h3>}
+    <>
+      {/* Fondo semitransparente */}
+      <div className="answer-edit-modal-overlay"></div>
+
+      {/* Contenedor de la modal */}
+      <div className="answer-edit-modal">
+        {title && <h2>{title}</h2>}
         {message && <p>{message}</p>}
-        {children}
-        <div className="modal-actions">
-          <button className="modal-btn-close" onClick={onClose}>
+
+        {/* Contenido adicional */}
+        {children && <div className="modal-content">{children}</div>}
+
+        {/* Botones */}
+        <div className="modal-buttons">
+          <button className="btn-secondary" onClick={onClose}>
             Cerrar
           </button>
           {onAction && (
-            <button className="modal-btn-action" onClick={onAction}>
+            <button className="btn-primary" onClick={onAction}>
               {actionLabel || "Aceptar"}
             </button>
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
