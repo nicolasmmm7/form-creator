@@ -1,51 +1,82 @@
-// src/pages/Login.jsx
-
-//login tradicional
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { loginWithGoogle } from "../firebase";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { loginUsuario, syncFirebaseUser } from "../api/usuario.api";
 
-
-
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-const params = new URLSearchParams(location.search);
-const next = params.get("next") || "/home";
+  const params = new URLSearchParams(location.search);
+  const next = params.get("next") || "/home";
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
+  // ====================================================
+  // 🔍 VERIFICAR SESIÓN EXISTENTE AL CARGAR
+  // ====================================================
+  useEffect(() => {
+    const checkExistingSession = () => {
+      const storedUser = localStorage.getItem("user");
+      const storedToken = localStorage.getItem("idToken");
+      
+      if (storedUser && storedToken) {
+        console.log("✅ Sesión existente encontrada, redirigiendo...");
+        navigate(next);
+      }
+      setIsCheckingAuth(false);
+    };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+    checkExistingSession();
+  }, [navigate, next]);
 
-  const result = await loginUsuario(email, password);
+  // ====================================================
+  // 📧 LOGIN TRADICIONAL (Email/Password)
+  // ====================================================
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-  if (result.ok) {
-    alert(`✅ Bienvenido ${result.data.usuario.nombre}`);
-    console.log("Usuario logueado:", result.data.usuario);
+    try {
+      const result = await loginUsuario(email, password);
 
-    // Guarda correctamente el usuario en localStorage
-    localStorage.setItem("user", JSON.stringify(result.data.usuario));
+      if (result.ok) {
+        alert(`✅ Bienvenido ${result.data.usuario.nombre}`);
+        console.log("Usuario logueado:", result.data.usuario);
 
-    navigate(next);
-  } else {
-    alert("❌ Error: " + (result.data.error || "Credenciales incorrectas"));
-  }
-};
+        // Guardar usuario en localStorage
+        localStorage.setItem("user", JSON.stringify(result.data.usuario));
+        localStorage.setItem("signin_provider", "normal");
 
+        navigate(next);
+      } else {
+        alert("❌ Error: " + (result.data.error || "Credenciales incorrectas"));
+      }
+    } catch (error) {
+      console.error("Error en login tradicional:", error);
+      alert("Error al iniciar sesión");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ====================================================
+  // 🔵 LOGIN CON GOOGLE
+  // ====================================================
   /**
-   * Maneja el login con Google
+   * FLUJO COMPLETO DE LOGIN CON GOOGLE:
    * 
-   * FLUJO COMPLETO:
-   * 1. Llama a loginWithGoogle() que abre popup de Google
-   * 2. Firebase autentica y devuelve user + idToken
-   * 3. Llama a syncFirebaseUser() que sincroniza con backend
-   * 4. Backend busca/crea usuario en MongoDB
-   * 5. Guarda datos en localStorage
-   * 6. Redirige a /home
+   * 1. loginWithGoogle() abre popup de autenticación de Google
+   * 2. Firebase autentica y devuelve:
+   *    - user (con uid, email, displayName, photoURL)
+   *    - idToken (JWT para autenticar con backend)
+   * 3. syncFirebaseUser() sincroniza usuario con backend Django/MongoDB
+   * 4. Backend busca/crea usuario en base de datos
+   * 5. Enriquecemos datos del usuario con photoURL de Firebase
+   * 6. Guardamos todo en localStorage (user + idToken + imagen)
+   * 7. Redirigimos a /home
    */
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -61,11 +92,11 @@ const handleSubmit = async (e) => {
       }
 
       console.log("✅ PASO 2: Usuario autenticado en Firebase");
-      console.log("Datos del usuario:", {
+      console.log("Datos del usuario de Firebase:", {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
-        photoURL: user.photoURL
+        photoURL: user.photoURL // 👈 ESTA ES LA IMAGEN DE GOOGLE
       });
 
       console.log("🔵 PASO 3: Sincronizando con backend Django/MongoDB...");
@@ -75,15 +106,42 @@ const handleSubmit = async (e) => {
         console.log("✅ PASO 4: Usuario sincronizado correctamente");
         console.log("Datos desde MongoDB:", resultado.user);
         
-        // Guardar en localStorage para mantener sesión
-        localStorage.setItem('user', JSON.stringify(resultado.user));
-        localStorage.setItem('idToken', idToken);
+        // ====================================================
+        // 🎯 SOLUCIÓN CRÍTICA: ENRIQUECER CON IMAGEN DE GOOGLE
+        // ====================================================
+        // El backend puede no tener la imagen actualizada o no devolverla
+        // Por eso tomamos photoURL directamente de Firebase
+        const userWithImage = {
+          ...resultado.user,
+          perfil: {
+            ...resultado.user.perfil,
+            // Prioridad: photoURL de Firebase > avatar_url del backend > string vacío
+            avatar_url: user.photoURL || resultado.user.perfil?.avatar_url || ''
+          },
+          // Agregar metadatos útiles de Firebase
+          firebase_uid: user.uid,
+          auth_provider: 'google',
+          displayName: user.displayName,
+          provider: 'google'
+        };
+
+        console.log("📸 Usuario con imagen incluida:", userWithImage);
+        console.log("🖼️ URL de imagen:", userWithImage.perfil.avatar_url);
         
-        alert(`✅ Bienvenido ${resultado.user.nombre}!`);
+        // ====================================================
+        // 💾 GUARDAR EN LOCALSTORAGE
+        // ====================================================
+        localStorage.setItem('user', JSON.stringify(userWithImage));
+        localStorage.setItem('idToken', idToken);
+        localStorage.setItem('signin_provider', 'google'); // Marcar como usuario de Google
+        
+        console.log("✅ Datos guardados en localStorage");
+        
+        alert(`✅ Bienvenido ${userWithImage.nombre || user.displayName}!`);
         navigate(next);
       } else {
         alert("Error al iniciar sesión con Google. Revisa la consola.");
-        console.error("Error en respuesta del backend:", resultado);
+        console.error("❌ Error en respuesta del backend:", resultado);
       }
 
     } catch (error) {
@@ -94,6 +152,43 @@ const handleSubmit = async (e) => {
     }
   };
 
+  // ====================================================
+  // ⏳ PANTALLA DE CARGA INICIAL
+  // ====================================================
+  if (isCheckingAuth) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '18px',
+        color: '#6366f1',
+        flexDirection: 'column',
+        gap: '20px'
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '4px solid #e5e7eb',
+          borderTop: '4px solid #6366f1',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <p>Verificando sesión...</p>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // ====================================================
+  // 🎨 FORMULARIO DE LOGIN
+  // ====================================================
   return (
     <main id="main-login">
       <section id="login-section">

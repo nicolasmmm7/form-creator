@@ -252,6 +252,16 @@ const handleTogglePublicar = async (form) => {
               src={user.perfil.avatar_url}
               alt={user?.nombre || "Avatar"}
               className="home-avatar"
+              onError={(e) => {
+                // Si la imagen falla al cargar, reemplázala por el ícono SVG genérico
+                e.target.outerHTML = `
+                  <svg viewBox="0 0 24 24" fill="none" style="width: 35px; height: 35px;">
+                    <circle cx="12" cy="8" r="4" stroke="#6366f1" stroke-width="2"/>
+                    <path d="M6 21c0-3.314 2.686-6 6-6s6 2.686 6 6"
+                          stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                `;
+              }}
             />
           ) : (
             <svg viewBox="0 0 24 24" fill="none" style={{ width: "35px", height: "35px" }}>

@@ -48,7 +48,11 @@ class FirebaseAuthentication(BaseAuthentication):
         
         try:
             # ⚠️ CRÍTICO: Agregar check_revoked=False para debugging
-            decoded_token = auth.verify_id_token(id_token, check_revoked=False)
+            decoded_token = auth.verify_id_token(
+                id_token, 
+                check_revoked=False,
+                clock_skew_seconds=60 # 👈 Tolerancia de 2 minutos
+            )
             
             # Extraer información del token decodificado
             firebase_uid = decoded_token['uid']
