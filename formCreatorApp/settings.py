@@ -174,3 +174,5 @@ except Exception as e:
 BREVO_API_KEY = config('NUEVOBREVO_API_KEY')   #por ahora la dejaré ahí (olvidenlo, ya lo reemplacé, nunca hagan eso que se bloquea)
 BREVO_SENDER_NAME = "FormCreator OTP"
 BREVO_SENDER_EMAIL = "formcreatorufps@gmail.com"
+
+DEBUG = True

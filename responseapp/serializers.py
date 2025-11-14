@@ -50,13 +50,15 @@ class RespuestaPreguntaSerializer(serializers.Serializer):
 
 class RespondedorSerializer(serializers.Serializer):
     # usado cuando el respondent se manda explícitamente (ej: auth no integrada aún)
-    ip_address = serializers.CharField(required=False)
+    ip_address = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     google_id = serializers.IntegerField(required=False, allow_null=True)
     email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
     nombre = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     foto_perfil = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     def create_or_get(self, validated_data, request=None):
+        print("🟢 create_or_get() - validated_data:", validated_data)
+
         """
         Busca o crea un Respondedor:
          - Prioridad: google_id -> email -> ip
@@ -64,10 +66,20 @@ class RespondedorSerializer(serializers.Serializer):
         if request is not None and not validated_data.get("ip_address"):
             validated_data["ip_address"] = get_client_ip(request)
 
+        #Normalizar tipos (para evitar error de validacion en MongoEngine)
+        for field in ["google_id", "email", "nombre", "foto_perfil", "ip_address"]:
+            val = validated_data.get(field)
+            if val is None or val == "":
+                validated_data[field] = None
+            elif not isinstance(val, str):
+                validated_data[field]=str(val)
+
         # buscar por google_id
-        if validated_data.get("google_id"):
+        google_id = validated_data.get("google_id")
+        if google_id:
             r = Respondedor.objects(google_id=validated_data["google_id"]).first()
             if r:
+                print("⚠️ Reusando respondedor (google_id)")
                 # actualizar últimos campos mínimos
                 if validated_data.get("nombre"):
                     r.nombre = validated_data.get("nombre")
@@ -78,27 +90,43 @@ class RespondedorSerializer(serializers.Serializer):
                 return r
 
         # buscar por email
-        if validated_data.get("email"):
+        email = validated_data.get("email")
+        if email:
             r = Respondedor.objects(email=validated_data["email"]).first()
             if r:
+                print("⚠️ Reusando respondedor (email existente):", r.email)
                 r.ultimo_login = datetime.utcnow()
                 if validated_data.get("nombre"):
                     r.nombre = validated_data.get("nombre")
                 r.save()
                 return r
-
+            else: 
+                print ("Creando respondedor nuevo (email proporcionado):", validated_data.get("email"))
+                new_r = Respondedor(**validated_data)
+                new_r.save()
+                print("respondedor creado (por email): ", new_r.id)
+                return new_r
+            
         # fallback por IP
         ip = validated_data.get("ip_address")
         if ip:
             r = Respondedor.objects(ip_address=ip).first()
             if r:
+                print("⚠️ Reusando respondedor (IP existente):", ip)
                 r.ultimo_login = datetime.utcnow()
+                if validated_data.get("nombre"):
+                    r.nombre = validated_data.get("nombre")
+
                 r.save()
                 return r
+            
+        
 
         # crear nuevo
+        print("🆕 Creando nuevo respondedor sin email, google o ip:", validated_data)
         r = Respondedor(**validated_data)
         r.save()
+        print("✅ Respondedor guardado:", r.id)
         return r
 
 
@@ -214,14 +242,20 @@ class RespuestaFormularioSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
+
         """
         Crear Respondedor (o reusar) y crear RespuestaFormulario.
         """
+        print("💡 Entrando a create_or_get con:", validated_data)
+
+
         from datetime import datetime
         request = self.context.get("request", None)
 
         form = validated_data.pop("_form_obj", None)
-        respondedor_data = validated_data.pop("respondedor", None)
+        respondedor_data = validated_data.pop("respondedor", None) or {}
+        print("🧩 RESPONDEDOR_DATA:", respondedor_data)
+
         tiempo = validated_data.get("tiempo_completacion", None)
 
         # determino IP
@@ -233,10 +267,8 @@ class RespuestaFormularioSerializer(serializers.Serializer):
             else:
                 ip = request.META.get('REMOTE_ADDR')
 
-        # crear / obtener respondedor
-        resp_serializer = RespondedorSerializer(data=respondedor_data or {})
-        resp_serializer.is_valid(raise_exception=False)  # no estrictamente necesario
-        resp_valid = resp_serializer.validated_data if hasattr(resp_serializer, "validated_data") else {}
+        # Prepare dict para buscar/crear Respondedor
+        resp_valid = dict(respondedor_data)  # copia
         if ip and not resp_valid.get("ip_address"):
             resp_valid["ip_address"] = ip
 
@@ -251,28 +283,65 @@ class RespuestaFormularioSerializer(serializers.Serializer):
             if getattr(request.user, "first_name", None):
                 resp_valid["nombre"] = getattr(request.user, "first_name")
 
-        respondedor_obj = resp_serializer.create_or_get(resp_valid, request=request)
+        # crear/obtener respondedor
+        resp_serializer = RespondedorSerializer(data=resp_valid)
+        resp_serializer.is_valid(raise_exception=False)
+        resp_validated = getattr(resp_serializer, "validated_data", {}) or {}
+        respondedor_obj = resp_serializer.create_or_get(resp_validated, request=request)
 
         # ver si el formulario no permite múltiples respuestas
+        exists = None
         config = getattr(form, "configuracion", None)
         if config and getattr(config, "una_respuesta", False):
-            # buscar si ya existe una respuesta para este formulario desde este respondedor o esta IP
-            exists = RespuestaFormulario.objects(
-                formulario=form,
-                respondedor=respondedor_obj
-            ).first()
+            #si tenemos identificacion fiable se busca por eso
+            if resp_validated.get("google_id"):
+                respondedor = Respondedor.objects(google_id=resp_validated["google_id"]).first()
+                if respondedor:
+                    exists = RespuestaFormulario.objects(formulario=form, respondedor=respondedor).first()
+
+            elif resp_validated.get("email"):
+                respondedor = Respondedor.objects(email=resp_validated["email"]).first()
+                if respondedor:
+                    exists = RespuestaFormulario.objects(formulario=form, respondedor=respondedor).first()
+            else:
+                #Anonymous: buscar por IP
+                if respondedor_obj and getattr(respondedor_obj, "ip_address", None):
+                    respondedor = Respondedor.objects(ip_address=respondedor_obj.ip_address).first()
+                    if respondedor:
+                        exists = RespuestaFormulario.objects(formulario=form, respondedor=respondedor).first()
+
             if exists:
-                raise serializers.ValidationError({"non_field_errors": "Ya existe una respuesta registrada para este respondedor/formulario."})
+                #si permite editar, actualizamos la respuesta existente
+                if getattr(config,  "permitir_edicion", False):
+                    exists.respuestas = [
+                        RespuestaPregunta(
+                            pregunta_id = r["pregunta_id"],
+                            tipo = r["tipo"],
+                            valor = r.get("valor", [])
+                        )
+                        for r in validated_data.get("respuestas", [])
+                    ]
+
+                    exists.tiempo_completacion = tiempo
+                    exists.fecha_envio = datetime.utcnow()
+                    exists.save()
+                    return exists
+                    
+                # si no permite edicion ---> error 
+                raise serializers.ValidationError({
+                    "non_field_errors": "Ya existe una respuesta registrada para este formulario"
+                })
+            
 
             # si respondedor fue creado solo por IP, podría haber existencias con ese mismo IP
-            if respondedor_obj and respondedor_obj.ip_address:
+            #if respondedor_obj and respondedor_obj.ip_address:
                 # Buscar manualmente todas las respuestas y comparar
-                respuestas_ip = RespuestaFormulario.objects(formulario=form)
-                for r in respuestas_ip:
-                    if r.respondedor and r.respondedor.ip_address == respondedor_obj.ip_address:
-                        raise serializers.ValidationError({
-                            "non_field_errors": "Ya existe una respuesta desde esta IP para el formulario."
-            })
+                #respuestas_ip = RespuestaFormulario.objects(formulario=form)
+                #for r in respuestas_ip:
+                   # if r.respondedor and r.respondedor.ip_address == respondedor_obj.ip_address:
+                  #      raise serializers.ValidationError({
+                      #      "non_field_errors": "Ya existe una respuesta desde esta IP para el formulario."
+           # })
 
         # construir objetos RespuestaPregunta embebidos
         respuesta_objs = []
@@ -291,5 +360,36 @@ class RespuestaFormularioSerializer(serializers.Serializer):
             tiempo_completacion=tiempo,
             respuestas=respuesta_objs
         )
+
+        if config and getattr(config, "una_respuesta", False):
+            existing = RespuestaFormulario.objects(formulario=form, respondedor=respondedor_obj).first()
+            if existing:
+                raise serializers.ValidationError({
+            "non_field_errors": "Este formulario solo admite una respuesta por persona."
+        })
+
         rf.save()
         return rf
+    
+    #Update para editar respuesta ------------------------
+    def update(self, instance, validated_data):
+        # Actualizar respuestas y tiempo de completación
+        if "respuestas" in validated_data:
+            # Construir lista de objetos RespuestaPregunta
+            respuesta_objs = []
+            for r in validated_data["respuestas"]:
+                rp = RespuestaPregunta(
+                    pregunta_id=r["pregunta_id"],
+                    tipo=r["tipo"],
+                    valor=r.get("valor", [])
+                )
+                respuesta_objs.append(rp)
+            instance.respuestas = respuesta_objs
+        if "tiempo_completacion" in validated_data:
+            instance.tiempo_completacion = validated_data["tiempo_completacion"]
+        # (Opcional: actualizar fecha_envio o respuestas de respondedor si se permite)
+
+        instance.save()
+        return instance
+    
+    

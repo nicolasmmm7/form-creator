@@ -137,7 +137,12 @@ const Login = () => {
         
         console.log("✅ Datos guardados en localStorage");
         
-        alert(`✅ Bienvenido ${userWithImage.nombre || user.displayName}!`);
+        // 🧹 Limpia cualquier respondedor anterior (evita mezcla de cuentas)
+      localStorage.removeItem("respondedorId");
+      localStorage.removeItem("client_ip");
+      // 
+ 
+        alert(`✅ Bienvenido ${resultado.user.nombre}!`);
         navigate(next);
       } else {
         alert("Error al iniciar sesión con Google. Revisa la consola.");
