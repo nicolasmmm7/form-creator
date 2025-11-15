@@ -230,11 +230,11 @@ function AnswerForm() {
     const data = await res.json();
     if (res.ok) {
         setMensaje("✅ ¡Respuesta enviada correctamente!");
-        localStorage.removeItem(`pending_answers_${id}`); //limpiar pending si existía (esto lo agregó angely perdón si esta mal)
+        localStorage.removeItem(`pending_answers_${id}`); //
         const userData = JSON.parse(localStorage.getItem("user"));
         // Redirigir según si hay user o no
         if (userData?.id) {
-            navigate("/home");
+            navigate(`/editSuccess?edit=${isEditing}`);
         } else {
             navigate(`/thankyou?edit=${isEditing}`);
         }
@@ -430,7 +430,21 @@ function AnswerForm() {
             </button>
           </div>
         </>
-      ) : (
+      ) : !formulario?.configuracion?.una_respuesta ? (
+      // ----- Caso 2: múltiples respuestas permitidas -----
+      <>
+        <p className="mb-4">
+        Ya has enviado una respuesta, pero este formulario permite varias. ¿Quieres enviar otra?
+        </p>
+        
+    <button
+      onClick={() => setShowModal(false)}
+      className="bg-green-600 text-white px-4 py-2 rounded"
+    >
+      Enviar otra respuesta
+    </button>
+  </>
+) :(
         <>
           <p className="mb-4">
             Ya completaste este formulario y no se permiten nuevas respuestas.

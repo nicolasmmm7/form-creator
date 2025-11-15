@@ -7,6 +7,7 @@ import PasswordReset from "./pages/password-reset";
 import ProfilePage from "./pages/ProfilePage";
 import AnswerForm from "./pages/AnswerForm";
 import ThankYou from "./pages/ThankYou";
+import EditSuccess from "./pages/EditSuccess";
 
 
 import "./css/Auth.css";
@@ -31,6 +32,7 @@ function App() {
         <Route path="/create/:formId?" element={<CreateForm />} />
         <Route path="/password-reset" element={<PasswordReset />} />
         <Route path="/ProfilePage" element={<ProfilePage />} />
+        <Route path="/editSuccess" element={<EditSuccess />} />
       </Routes>
     </Router>
   );
