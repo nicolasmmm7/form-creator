@@ -4,6 +4,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import "../css/CreateForm.css"; // reutilizamos el mismo estilo
 import AuthModal from "../components/AuthModal"; //modal para cuando el form requiere login
 import AnswerEditModal from "../components/AnswerEditModal";
+import SingleResponseAuthModal from "../components/SingleResponseAuthModal";
 
 
 
@@ -19,6 +20,8 @@ function AnswerForm() {
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalDismissed, setModalDismissed] = useState(false);
+  const [showSingleResponseModal, setShowSingleResponseModal] = useState(false);
+
   
 
   function Modal({ visible, title, message, onClose, actionLabel, onAction }) {
@@ -174,6 +177,15 @@ function AnswerForm() {
     
     const user = JSON.parse(localStorage.getItem("user") || "null");
     const ip = localStorage.getItem("client_ip") || "";
+
+    // Si el formulario es de una sola respuesta -> exigir login real
+  if (formulario.configuracion?.una_respuesta) {
+    if (!user) {
+      // abrir modal que pide login específico para este caso
+      setShowSingleResponseModal(true);
+      return;
+    }
+  }
 
     // Si requiere login y no está logueado -> abrir modal y guardar respuestas
     if (!validateLogin()) {
@@ -475,6 +487,16 @@ function AnswerForm() {
           allowGuest={!formulario.configuracion?.requerir_login && !formulario.configuracion?.privado}
         />
       )}
+
+      {showSingleResponseModal && (
+      <SingleResponseAuthModal
+        onLogin={() => {
+        localStorage.setItem(`pending_answers_${id}`, JSON.stringify(respuestas));
+        navigate(`/login?next=/form/${id}/answer`);
+        }}
+  />
+)}
+
 
     </main>
   );
