@@ -66,14 +66,53 @@ class PreguntaSerializer(serializers.Serializer):
         return data
 
 
-
 class ConfiguracionFormularioSerializer(serializers.Serializer):
+    # Nuevos campos para la funcionalidad de visibilidad
+    es_publico = serializers.BooleanField(default=True)
+    usuarios_autorizados = serializers.ListField(
+        child=serializers.EmailField(),
+        required=False,
+        allow_empty=True,
+        default=list
+    )
+    
+    # Campos existentes
     privado = serializers.BooleanField(default=False)
     fecha_limite = serializers.DateTimeField(required=False, allow_null=True)
     notificaciones_email = serializers.BooleanField(default=True)
     requerir_login = serializers.BooleanField(default=True)
     una_respuesta = serializers.BooleanField(default=False)
     permitir_edicion = serializers.BooleanField(default=False)
+    
+    def validate(self, data):
+        """
+        Validación personalizada para la configuración del formulario.
+        """
+        requerir_login = data.get('requerir_login', True)
+        es_publico = data.get('es_publico', True)
+        usuarios_autorizados = data.get('usuarios_autorizados', [])
+        
+        # Si el formulario es privado, requiere login y debe tener usuarios autorizados
+        if requerir_login and not es_publico and not usuarios_autorizados:
+            raise serializers.ValidationError({
+                "usuarios_autorizados": "Un formulario privado con login requerido debe tener al menos un usuario autorizado."
+            })
+        
+        # Si no requiere login, no tiene sentido configurar visibilidad privada
+        if not requerir_login and not es_publico:
+            raise serializers.ValidationError({
+                "es_publico": "No se puede configurar un formulario como privado si no requiere login."
+            })
+        
+        # Normalizar emails a minúsculas para evitar duplicados
+        if usuarios_autorizados:
+            emails_normalizados = [email.lower() for email in usuarios_autorizados]
+            # Eliminar duplicados
+            emails_unicos = list(set(emails_normalizados))
+            data['usuarios_autorizados'] = emails_unicos
+        
+        return data
+
 
 # -----------------------------
 # Serializer principal: Formulario
