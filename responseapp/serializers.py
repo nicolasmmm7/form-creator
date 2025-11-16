@@ -135,6 +135,7 @@ class RespuestaFormularioSerializer(serializers.Serializer):
     respondedor = RespondedorSerializer(required=False, allow_null=True)
     fecha_envio = serializers.DateTimeField(required=False)
     tiempo_completacion = serializers.IntegerField(required=False, allow_null=True)
+    enviar_copia = serializers.BooleanField(required=False, default=False)
     respuestas = RespuestaPreguntaSerializer(many=True, required=True)
 
     def validate_formulario_exists(self, formulario_id):
@@ -257,6 +258,8 @@ class RespuestaFormularioSerializer(serializers.Serializer):
         print("🧩 RESPONDEDOR_DATA:", respondedor_data)
 
         tiempo = validated_data.get("tiempo_completacion", None)
+        enviar_copia = validated_data.pop("enviar_copia", False)
+
 
         # determino IP
         ip = None
@@ -369,7 +372,58 @@ class RespuestaFormularioSerializer(serializers.Serializer):
         })
 
         rf.save()
+
+                # ─────────────────────────────────────────────────────
+        #  Enviar copia por correo si el usuario lo pidió
+        # ─────────────────────────────────────────────────────
+        if enviar_copia:
+            from utils.email_utils import send_form_responses_copy  # ✅ Importar la función correcta
+            
+            try:
+                correo = None
+                if respondedor_obj:
+                    correo = getattr(respondedor_obj, "email", None)
+
+                if correo:
+                    # Preparar lista de respuestas para el email
+                    respuestas_formateadas = []
+                    
+                    # Obtener preguntas del formulario para mostrar enunciados
+                    preguntas_dict = {p.id: p for p in form.preguntas}
+                    
+                    for r in rf.respuestas:
+                        pregunta_obj = preguntas_dict.get(r.pregunta_id)
+                        enunciado = pregunta_obj.enunciado if pregunta_obj else f"Pregunta {r.pregunta_id}"
+                        
+                        # Formatear el valor de la respuesta
+                        if isinstance(r.valor, list):
+                            respuesta_texto = ", ".join(str(v) for v in r.valor if v)
+                        else:
+                            respuesta_texto = str(r.valor) if r.valor else "Sin respuesta"
+                        
+                        respuestas_formateadas.append({
+                            "pregunta": enunciado,
+                            "respuesta": respuesta_texto
+                        })
+                    
+                    # Enviar el correo usando Brevo
+                    exito = send_form_responses_copy(
+                        recipient_email=correo,
+                        form_title=form.titulo,
+                        respuestas_list=respuestas_formateadas
+                    )
+                    
+                    if exito:
+                        print(f"✅ Copia de respuestas enviada correctamente a {correo}")
+                    else:
+                        print(f"⚠️ No se pudo enviar la copia al correo {correo}")
+                        
+            except Exception as e:
+                print("⚠️ Error al procesar envío de copia:", e)
+                import traceback
+                traceback.print_exc()
         return rf
+    
     
     #Update para editar respuesta ------------------------
     def update(self, instance, validated_data):
