@@ -19,6 +19,9 @@ function AnswerForm() {
   const [showModal, setShowModal] = useState(false);
   const [modalDismissed, setModalDismissed] = useState(false);
   const [showSingleResponseModal, setShowSingleResponseModal] = useState(false);
+  const [enviarCopia, setEnviarCopia] = useState(false);
+
+  const user = JSON.parse(localStorage.getItem("user") || "null");
 
   function Modal({ visible, title, message, onClose, actionLabel, onAction }) {
     if (!visible) return null;
@@ -55,7 +58,10 @@ function AnswerForm() {
   };
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user") || "null");
+    
+
+    
+
     const ip = localStorage.getItem("client_ip") || "";
     
     fetch(`http://127.0.0.1:8000/api/formularios/${id}/`)
@@ -237,6 +243,7 @@ function AnswerForm() {
         ...(user?.uid ? { google_id: user.uid } : {}),
       },
       tiempo_completacion: 30,
+      enviar_copia: enviarCopia,  
       respuestas: Object.entries(respuestas).map(([pid, { tipo, valor }]) => ({
         pregunta_id: Number(pid),
         tipo,
@@ -397,15 +404,29 @@ function AnswerForm() {
 
         <hr className="create-divider" />
 
-        <button type="submit" className="create-btn-save" onClick={handleSubmit}>
-          Enviar respuestas
-        </button>
+          {/* Contenedor para botón y checkbox alineados */}
+          <div className="answer-submit-container">
+            <button type="submit" className="create-btn-save" onClick={handleSubmit}>
+              Enviar respuestas
+            </button>
 
-        {mensaje && (
-          <p style={{ marginTop: "1rem", color: mensaje.includes("Error") || mensaje.includes("autorización") ? "red" : "green", fontWeight: "600" }}>
-            {mensaje}
-          </p>
-        )}
+            {user && (
+              <label className="answer-copy-checkbox">
+                <input
+                  type="checkbox"
+                  checked={enviarCopia}
+                  onChange={(e) => setEnviarCopia(e.target.checked)}
+                />
+                <span>Guardar copia al correo</span>
+              </label>
+            )}
+          </div>
+
+          {mensaje && (
+            <p style={{ marginTop: "1rem", color: mensaje.includes("Error") || mensaje.includes("autorización") ? "red" : "green", fontWeight: "600" }}>
+              {mensaje}
+            </p>
+          )}
 
         <AnswerEditModal
           visible={showModal}
@@ -516,6 +537,8 @@ function AnswerForm() {
           }}
         />
       )}
+
+      
     </main>
   );
 }
