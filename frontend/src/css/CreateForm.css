@@ -951,3 +951,196 @@ body::before {
   background: #bbb;
 }
 
+/* ======= Sección de usuarios autorizados ======= */
+.create-usuarios-section {
+  margin-top: 0.5rem;
+}
+
+/* Input container para email + botón agregar */
+.create-email-input-container {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.create-email-input-container .create-input {
+  flex: 1;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Botón agregar email (+) */
+.create-btn-add-email {
+  background-color: var(--color-primario);
+  color: white;
+  border: none;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create-btn-add-email:hover {
+  background-color: #3d7d76;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(76, 154, 146, 0.3);
+}
+
+.create-btn-add-email:active {
+  transform: scale(0.95);
+}
+
+/* Mensaje de error en email */
+.create-email-error {
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin-top: -0.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+  padding: 0.5rem;
+  background-color: #fee2e2;
+  border-radius: 0.5rem;
+  border-left: 3px solid #dc2626;
+}
+
+/* Lista de usuarios autorizados */
+.create-usuarios-lista {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid var(--color-borde);
+}
+
+/* Mensaje cuando está vacía la lista */
+.create-usuarios-empty {
+  color: var(--color-texto-secundario);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 1rem;
+  font-style: italic;
+}
+
+/* Item individual de usuario */
+.create-usuario-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.create-usuario-item:last-child {
+  margin-bottom: 0;
+}
+
+.create-usuario-item:hover {
+  background: #e9ecef;
+  border-color: var(--color-primario);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Email del usuario en la lista */
+.create-usuario-email {
+  font-size: 0.9rem;
+  color: var(--color-titulo);
+  font-weight: 500;
+  flex: 1;
+  word-break: break-word;
+}
+
+/* Botón eliminar usuario (X) */
+.create-btn-remove-email {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create-btn-remove-email:hover {
+  background-color: #dc2626;
+  color: white;
+  border-color: #dc2626;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.create-btn-remove-email:active {
+  transform: scale(0.95);
+}
+
+/* Scrollbar personalizado para la lista */
+.create-usuarios-lista::-webkit-scrollbar {
+  width: 8px;
+}
+
+.create-usuarios-lista::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.create-usuarios-lista::-webkit-scrollbar-thumb {
+  background: var(--color-primario);
+  border-radius: 10px;
+}
+
+.create-usuarios-lista::-webkit-scrollbar-thumb:hover {
+  background: #3d7d76;
+}
+
+/* ======= Responsividad para usuarios autorizados ======= */
+@media (max-width: 480px) {
+  .create-email-input-container {
+    gap: 0.4rem;
+  }
+
+  .create-btn-add-email {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+
+  .create-usuario-item {
+    padding: 0.6rem;
+  }
+
+  .create-usuario-email {
+    font-size: 0.85rem;
+  }
+
+  .create-btn-remove-email {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+
+  .create-usuarios-lista {
+    max-height: 200px;
+  }
+}
