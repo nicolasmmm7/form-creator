@@ -127,11 +127,14 @@ function AnswerForm() {
             });
 
             console.log("🔹 Resultado de match:", match);
-
+          
             if (match) {
-              setExistingResponse(match);
-              setShowModal(true);
+            setExistingResponse(match);
+            if (!modalDismissed) {
+            setShowModal(true);
             }
+            }
+
           })
           .catch(err => console.error("❌ Error al verificar respuestas:", err));
 
@@ -294,6 +297,8 @@ function AnswerForm() {
     action: null,
   });
 
+  
+
   if (!formulario) return <div className="create-section-main">Cargando formulario...</div>;
 
   if (modal.visible) {
@@ -308,6 +313,7 @@ function AnswerForm() {
       />
     );
   }
+
 
   return (
     <main className="create-form-main">
