@@ -342,6 +342,7 @@ function AnswerForm() {
                 className="create-input"
                 type="text"
                 placeholder="Tu respuesta..."
+                value={respuestas[p.id]?.valor || ""}  // ⬅ precarga
                 onChange={(e) => handleChange(p.id, p.tipo, e.target.value)}
               />
             )}
@@ -356,6 +357,7 @@ function AnswerForm() {
                       name={`pregunta_${p.id}`}
                       className="create-checkbox"
                       value={o.texto}
+                      checked={respuestas[p.id]?.valor === o.texto}  // ⬅ precarga
                       onChange={(e) => handleChange(p.id, p.tipo, e.target.value)}
                     />
                     <label className="create-label">{o.texto}</label>
@@ -373,6 +375,7 @@ function AnswerForm() {
                       type="checkbox"
                       className="create-checkbox"
                       value={o.texto}
+                      checked={respuestas[p.id]?.valor?.includes(o.texto) || false} // ⬅ precarga
                       onChange={(e) => {
                         const current = respuestas[p.id]?.valor || [];
                         if (e.target.checked)
@@ -395,6 +398,7 @@ function AnswerForm() {
                   type="number"
                   min={p.validaciones.valor_minimo || 0}
                   max={p.validaciones.valor_maximo || 10}
+                  value={respuestas[p.id]?.valor || ""} // ⬅ precarga
                   onChange={(e) => handleChange(p.id, p.tipo, e.target.value)}
                 />
               </div>
