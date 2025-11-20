@@ -20,6 +20,7 @@ export default function CreateForm() {
   const [descripcion, setDescripcion] = useState("");
   const [preguntas, setPreguntas] = useState([defaultQuestion(1)]);
   const [nextId, setNextId] = useState(2);
+  const [enviandoInvitaciones, setEnviandoInvitaciones] = useState(false);
 
   // 🔧 Configuración del formulario (actualizada con nuevos campos)
   const [config, setConfig] = useState({
@@ -177,6 +178,45 @@ export default function CreateForm() {
     });
   };
 
+
+  // 🆕 Función para enviar invitaciones
+const enviarInvitaciones = async (formId) => {
+  if (!config.usuarios_autorizados.length) {
+    alert("⚠️ No hay usuarios autorizados para invitar");
+    return;
+  }
+
+  if (!window.confirm(`¿Enviar invitaciones a ${config.usuarios_autorizados.length} usuario(s)?`)) {
+    return;
+  }
+
+  setEnviandoInvitaciones(true);
+
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/api/formularios/${formId}/invitar/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: user.id }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert(`✅ ${data.message}\n\nEnviadas: ${data.enviados}/${data.total}`);
+      if (data.fallidos.length > 0) {
+        console.error("❌ Emails fallidos:", data.fallidos);
+      }
+    } else {
+      alert(`⚠️ Error: ${data.error}`);
+    }
+  } catch (error) {
+    console.error("❌ Error al enviar invitaciones:", error);
+    alert("⚠️ Error de conexión al enviar invitaciones");
+  } finally {
+    setEnviandoInvitaciones(false);
+  }
+};
+
   const handleSave = async () => {
     if (!titulo.trim()) return alert("Escribe un título");
     if (preguntas.some(p => !p.enunciado.trim())) {
@@ -245,14 +285,28 @@ export default function CreateForm() {
         return;
       }
 
+      const formularioId = formId || data.id; // ID del form (nuevo o editado)
       const mensaje = formId ? "✅ Formulario actualizado correctamente" : "✅ Formulario creado correctamente";
+      // 🆕 Si es privado, requiere login y tiene notificaciones activadas
+    if (config.requerir_login && !config.es_publico && config.notificaciones_email) {
+      const confirmar = window.confirm(
+        `${mensaje}\n\n¿Deseas enviar invitaciones por email a los ${config.usuarios_autorizados.length} usuario(s) autorizado(s)?`
+      );
+      
+      if (confirmar) {
+        await enviarInvitaciones(formularioId);
+      }
+    } else {
       alert(mensaje);
-      navigate("/home");
-    } catch (e) {
-      console.error("❌ Error en handleSave:", e);
-      alert("Fallo de conexión al crear formulario");
     }
-  };
+    
+    navigate("/home");
+  } catch (e) {
+    console.error("❌ Error en handleSave:", e);
+    alert("Fallo de conexión al crear formulario");
+  }
+};
+
 
   return (
     <main className="create-form-main">
@@ -565,19 +619,30 @@ export default function CreateForm() {
             )}
           </>
         )}
+
+
+        {/* Mostrar notificaciones solo si requiere login Y es privado */}
+        {config.requerir_login && !config.es_publico && config.usuarios_autorizados.length > 0 && (
+          <label className="create-config-label">
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              Notificar por email
+              <span style={{ fontSize: '0.85rem', color: '#6C7A78', fontWeight: 'normal' }}>
+                ({config.usuarios_autorizados.length} usuario{config.usuarios_autorizados.length !== 1 ? 's' : ''})
+              </span>
+            </span>
+            <input
+              className="create-checkbox"
+              type="checkbox"
+              checked={config.notificaciones_email}
+              onChange={(e) =>
+                setConfig({ ...config, notificaciones_email: e.target.checked })
+              }
+            />
+          </label>
+        )}
         {/* 🆕 FIN NUEVA SECCIÓN */}
 
-        <label className="create-config-label">
-          Notificar por email:
-          <input
-            className="create-checkbox"
-            type="checkbox"
-            checked={config.notificaciones_email}
-            onChange={(e) =>
-              setConfig({ ...config, notificaciones_email: e.target.checked })
-            }
-          />
-        </label>
+        
 
         <label className="create-config-label">
           Fecha límite:

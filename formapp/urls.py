@@ -6,7 +6,8 @@ from formapp.views import (
     FormularioAccesoAPI,
     FormularioAgregarUsuarioAPI,
     FormularioRemoverUsuarioAPI,
-    FormularioListarUsuariosAPI
+    FormularioListarUsuariosAPI,
+    EnviarInvitacionesAPI
 )
 
 urlpatterns = [
@@ -19,4 +20,7 @@ urlpatterns = [
     path('<str:id>/usuarios-autorizados/', FormularioListarUsuariosAPI.as_view(), name='form_listar_usuarios'),
     path('<str:id>/agregar-usuario/', FormularioAgregarUsuarioAPI.as_view(), name='form_agregar_usuario'),
     path('<str:id>/remover-usuario/', FormularioRemoverUsuarioAPI.as_view(), name='form_remover_usuario'),
+    
+    # 🆕 Ruta de invitaciones (SIN duplicar "formularios/")
+    path('<str:form_id>/invitar/', EnviarInvitacionesAPI.as_view(), name='enviar_invitaciones'),
 ]
