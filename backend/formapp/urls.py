@@ -9,6 +9,7 @@ from formapp.views import (
     FormularioListarUsuariosAPI,
     EnviarInvitacionesAPI
 )
+from responseapp.views import FormularioEstadisticasAPI, FormularioExportarAPI
 
 urlpatterns = [
     # Rutas existentes
@@ -23,4 +24,8 @@ urlpatterns = [
     
     # 🆕 Ruta de invitaciones (SIN duplicar "formularios/")
     path('<str:form_id>/invitar/', EnviarInvitacionesAPI.as_view(), name='enviar_invitaciones'),
+    
+    # 🆕 Estadísticas
+    path('<str:id>/estadisticas/', FormularioEstadisticasAPI.as_view(), name='form_estadisticas'),
+    path('<str:id>/exportar/', FormularioExportarAPI.as_view(), name='form_exportar'),
 ]

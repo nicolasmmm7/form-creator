@@ -21,6 +21,9 @@ function AnswerForm() {
   const [showSingleResponseModal, setShowSingleResponseModal] = useState(false);
   const [enviarCopia, setEnviarCopia] = useState(false);
 
+  // ⏱️ Inicio del contador de tiempo
+  const [startTime] = useState(Date.now());
+
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   function Modal({ visible, title, message, onClose, actionLabel, onAction }) {
@@ -57,13 +60,31 @@ function AnswerForm() {
     setRespuestas(respuestasPrecargadas);
   };
 
+
+  function getClientInfo() {
+    const ua = navigator.userAgent || "";
+    const lc = ua.toLowerCase();
+
+    // Detección de navegador (orden importante)
+    let browser = "Desconocido";
+    if (/edg\//i.test(ua)) browser = "Edge";
+    else if (/opr\//i.test(ua) || /opera/i.test(ua)) browser = "Opera";
+    else if (/firefox/i.test(ua)) browser = "Firefox";
+    else if (/chrome/i.test(ua) && !/edg\//i.test(ua) && !/opr\//i.test(ua)) browser = "Chrome";
+    else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = "Safari";
+
+    // Detección de dispositivo
+    let device = "Desktop";
+    if (/mobile|android|iphone|ipod/i.test(lc)) device = "Móvil";
+    else if (/tablet|ipad/i.test(lc)) device = "Tablet";
+
+    console.log("🔍 Cliente detectado:", { browser, device });
+    return { browser, device };
+  }
+
   useEffect(() => {
-    
-
-    
-
     const ip = localStorage.getItem("client_ip") || "";
-    
+
     fetch(`http://127.0.0.1:8000/api/formularios/${id}/`)
       .then(res => res.json())
       .then(data => {
@@ -127,12 +148,12 @@ function AnswerForm() {
             });
 
             console.log("🔹 Resultado de match:", match);
-          
+
             if (match) {
-            setExistingResponse(match);
-            if (!modalDismissed) {
-            setShowModal(true);
-            }
+              setExistingResponse(match);
+              if (!modalDismissed) {
+                setShowModal(true);
+              }
             }
 
           })
@@ -173,7 +194,7 @@ function AnswerForm() {
     if (pending) {
       try {
         setRespuestas(JSON.parse(pending));
-      } catch (e) {}
+      } catch (e) { }
     }
   }, [id]);
 
@@ -203,7 +224,7 @@ function AnswerForm() {
     e.preventDefault();
 
     if (!formulario) return;
-    
+
     const user = JSON.parse(localStorage.getItem("user") || "null");
     const ip = localStorage.getItem("client_ip") || "";
 
@@ -237,16 +258,24 @@ function AnswerForm() {
       return;
     }
 
+    // ⏱️ Calcular tiempo transcurrido
+    const endTime = Date.now();
+    const tiempoTotal = Math.round((endTime - startTime) / 1000); // Segundos
+
+    const client = getClientInfo();
+
     const payload = {
       formulario: id,
       respondedor: {
         ip_address: ip,
+        navegador: client.browser,     // ✅ Debe ser el valor detectado
+        dispositivo: client.device,    // ✅ Debe ser el valor detectado
         ...(user?.email ? { email: user.email } : {}),
         ...(user?.nombre ? { nombre: user.nombre } : {}),
         ...(user?.uid ? { google_id: user.uid } : {}),
       },
-      tiempo_completacion: 30,
-      enviar_copia: enviarCopia,  
+      tiempo_completacion: tiempoTotal,
+      enviar_copia: enviarCopia,
       respuestas: Object.entries(respuestas).map(([pid, { tipo, valor }]) => ({
         pregunta_id: Number(pid),
         tipo,
@@ -254,7 +283,7 @@ function AnswerForm() {
       })),
     };
 
-    console.log("📤 Enviando payload al backend:", payload);
+    console.log("📤 Payload a enviar:", payload);
 
     const url = isEditing
       ? `http://127.0.0.1:8000/api/respuestas/${existingResponse.id}/`
@@ -297,8 +326,6 @@ function AnswerForm() {
     action: null,
   });
 
-  
-
   if (!formulario) return <div className="create-section-main">Cargando formulario...</div>;
 
   if (modal.visible) {
@@ -313,7 +340,6 @@ function AnswerForm() {
       />
     );
   }
-
 
   return (
     <main className="create-form-main">
@@ -414,29 +440,29 @@ function AnswerForm() {
 
         <hr className="create-divider" />
 
-          {/* Contenedor para botón y checkbox alineados */}
-          <div className="answer-submit-container">
-            <button type="submit" className="create-btn-save" onClick={handleSubmit}>
-              Enviar respuestas
-            </button>
+        {/* Contenedor para botón y checkbox alineados */}
+        <div className="answer-submit-container">
+          <button type="submit" className="create-btn-save" onClick={handleSubmit}>
+            Enviar respuestas
+          </button>
 
-            {user && (
-              <label className="answer-copy-checkbox">
-                <input
-                  type="checkbox"
-                  checked={enviarCopia}
-                  onChange={(e) => setEnviarCopia(e.target.checked)}
-                />
-                <span>Guardar copia al correo</span>
-              </label>
-            )}
-          </div>
-
-          {mensaje && (
-            <p style={{ marginTop: "1rem", color: mensaje.includes("Error") || mensaje.includes("autorización") ? "red" : "green", fontWeight: "600" }}>
-              {mensaje}
-            </p>
+          {user && (
+            <label className="answer-copy-checkbox">
+              <input
+                type="checkbox"
+                checked={enviarCopia}
+                onChange={(e) => setEnviarCopia(e.target.checked)}
+              />
+              <span>Guardar copia al correo</span>
+            </label>
           )}
+        </div>
+
+        {mensaje && (
+          <p style={{ marginTop: "1rem", color: mensaje.includes("Error") || mensaje.includes("autorización") ? "red" : "green", fontWeight: "600" }}>
+            {mensaje}
+          </p>
+        )}
 
         <AnswerEditModal
           visible={showModal}
@@ -548,7 +574,7 @@ function AnswerForm() {
         />
       )}
 
-      
+
     </main>
   );
 }
