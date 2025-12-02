@@ -85,7 +85,7 @@ function AnswerForm() {
   useEffect(() => {
     const ip = localStorage.getItem("client_ip") || "";
 
-    fetch(`http://127.0.0.1:8000/api/formularios/${id}/`)
+    fetch(`https://form-creator-production.up.railway.app/api/formularios/${id}/`)
       .then(res => res.json())
       .then(data => {
         setFormulario(data);
@@ -127,7 +127,7 @@ function AnswerForm() {
         }
 
         // Verificar si ya respondió
-        fetch(`http://127.0.0.1:8000/api/respuestas/?formulario=${id}`)
+        fetch(`https://form-creator-production.up.railway.app/api/respuestas/?formulario=${id}`)
           .then(res => {
             if (!res.ok) throw new Error(`Error ${res.status}`);
             return res.json();
@@ -286,8 +286,8 @@ function AnswerForm() {
     console.log("📤 Payload a enviar:", payload);
 
     const url = isEditing
-      ? `http://127.0.0.1:8000/api/respuestas/${existingResponse.id}/`
-      : "http://127.0.0.1:8000/api/respuestas/";
+      ? `https://form-creator-production.up.railway.app/api/respuestas/${existingResponse.id}/`
+      : "https://form-creator-production.up.railway.app/api/respuestas/";
     const method = isEditing ? "PUT" : "POST";
 
     try {

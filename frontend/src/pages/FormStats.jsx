@@ -44,7 +44,7 @@ export default function FormStats() {
             try {
                 const info = getClientInfo();
                 // Cambia esta URL por la correcta en tu API (o muévelo a la página del formulario)
-                await fetch(`http://127.0.0.1:8000/api/formularios/${formId}/visita/`, {
+                await fetch(`https://form-creator-production.up.railway.app/api/formularios/${formId}/visita/`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ browser: info.browser, device: info.device }),
@@ -80,7 +80,7 @@ export default function FormStats() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await fetch(`http://127.0.0.1:8000/api/formularios/${formId}/estadisticas/`);
+                const res = await fetch(`https://form-creator-production.up.railway.app/api/formularios/${formId}/estadisticas/`);
                 if (!res.ok) throw new Error("No se pudieron cargar las estadísticas");
                 const data = await res.json();
                 console.log("📊 Estadísticas recibidas (raw):", data);
@@ -119,7 +119,7 @@ export default function FormStats() {
     }, [formId]);
 
     const handleExport = () => {
-        window.open(`http://127.0.0.1:8000/api/formularios/${formId}/exportar/`, '_blank');
+        window.open(`https://form-creator-production.up.railway.app/api/formularios/${formId}/exportar/`, '_blank');
     };
 
     if (loading) return (

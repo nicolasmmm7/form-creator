@@ -40,7 +40,7 @@ const Home = () => {
   const cargarFormularios = async (userId) => {
     setLoading(true);
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/formularios/?admin=${userId}`);
+      const res = await fetch(`https://form-creator-production.up.railway.app/api/formularios/?admin=${userId}`);
 
       if (!res.ok) {
         throw new Error("Error al cargar formularios");
@@ -101,7 +101,7 @@ const Home = () => {
         preguntas: formulario.preguntas || [],
       };
 
-      const res = await fetch("http://127.0.0.1:8000/api/formularios/", {
+      const res = await fetch("https://form-creator-production.up.railway.app/api/formularios/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formularioDuplicado),
@@ -130,7 +130,7 @@ const Home = () => {
     if (!confirmacion) return;
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/formularios/${id}/`, {
+      const res = await fetch(`https://form-creator-production.up.railway.app/api/formularios/${id}/`, {
         method: "DELETE",
       });
 
@@ -208,7 +208,7 @@ const Home = () => {
         },
       };
 
-      const res = await fetch(`http://127.0.0.1:8000/api/formularios/${form.id}/`, {
+      const res = await fetch(`https://form-creator-production.up.railway.app/api/formularios/${form.id}/`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(actualizado),

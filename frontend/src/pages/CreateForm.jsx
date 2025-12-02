@@ -46,8 +46,8 @@ export default function CreateForm() {
       if (!formId) return;
 
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/formularios/${formId}/`);
-        
+        const res = await fetch(`https://form-creator-production.up.railway.app/api/formularios/${formId}/`);
+
         if (!res.ok) {
           throw new Error("No se pudo cargar el formulario");
         }
@@ -59,7 +59,7 @@ export default function CreateForm() {
         setTitulo(data.titulo);
         setDescripcion(data.descripcion);
         setPreguntas(data.preguntas || []);
-        
+
         // Calcular el siguiente ID (máximo ID + 1)
         const maxId = Math.max(...(data.preguntas?.map(p => p.id) || [0]));
         setNextId(maxId + 1);
@@ -180,42 +180,42 @@ export default function CreateForm() {
 
 
   // 🆕 Función para enviar invitaciones
-const enviarInvitaciones = async (formId) => {
-  if (!config.usuarios_autorizados.length) {
-    alert("⚠️ No hay usuarios autorizados para invitar");
-    return;
-  }
-
-  if (!window.confirm(`¿Enviar invitaciones a ${config.usuarios_autorizados.length} usuario(s)?`)) {
-    return;
-  }
-
-  setEnviandoInvitaciones(true);
-
-  try {
-    const res = await fetch(`http://127.0.0.1:8000/api/formularios/${formId}/invitar/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: user.id }),
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      alert(`✅ ${data.message}\n\nEnviadas: ${data.enviados}/${data.total}`);
-      if (data.fallidos.length > 0) {
-        console.error("❌ Emails fallidos:", data.fallidos);
-      }
-    } else {
-      alert(`⚠️ Error: ${data.error}`);
+  const enviarInvitaciones = async (formId) => {
+    if (!config.usuarios_autorizados.length) {
+      alert("⚠️ No hay usuarios autorizados para invitar");
+      return;
     }
-  } catch (error) {
-    console.error("❌ Error al enviar invitaciones:", error);
-    alert("⚠️ Error de conexión al enviar invitaciones");
-  } finally {
-    setEnviandoInvitaciones(false);
-  }
-};
+
+    if (!window.confirm(`¿Enviar invitaciones a ${config.usuarios_autorizados.length} usuario(s)?`)) {
+      return;
+    }
+
+    setEnviandoInvitaciones(true);
+
+    try {
+      const res = await fetch(`https://form-creator-production.up.railway.app/api/formularios/${formId}/invitar/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(`✅ ${data.message}\n\nEnviadas: ${data.enviados}/${data.total}`);
+        if (data.fallidos.length > 0) {
+          console.error("❌ Emails fallidos:", data.fallidos);
+        }
+      } else {
+        alert(`⚠️ Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("❌ Error al enviar invitaciones:", error);
+      alert("⚠️ Error de conexión al enviar invitaciones");
+    } finally {
+      setEnviandoInvitaciones(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!titulo.trim()) return alert("Escribe un título");
@@ -258,14 +258,14 @@ const enviarInvitaciones = async (formId) => {
 
       if (formId) {
         // EDICIÓN: Usar PUT
-        res = await fetch(`http://127.0.0.1:8000/api/formularios/${formId}/`, {
+        res = await fetch(`https://form-creator-production.up.railway.app/api/formularios/${formId}/`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
       } else {
         // CREACIÓN: Usar POST
-        res = await fetch("http://127.0.0.1:8000/api/formularios/", {
+        res = await fetch("https://form-creator-production.up.railway.app/api/formularios/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -288,32 +288,32 @@ const enviarInvitaciones = async (formId) => {
       const formularioId = formId || data.id; // ID del form (nuevo o editado)
       const mensaje = formId ? "✅ Formulario actualizado correctamente" : "✅ Formulario creado correctamente";
       // 🆕 Si es privado, requiere login y tiene notificaciones activadas
-    if (config.requerir_login && !config.es_publico && config.notificaciones_email) {
-      const confirmar = window.confirm(
-        `${mensaje}\n\n¿Deseas enviar invitaciones por email a los ${config.usuarios_autorizados.length} usuario(s) autorizado(s)?`
-      );
-      
-      if (confirmar) {
-        await enviarInvitaciones(formularioId);
+      if (config.requerir_login && !config.es_publico && config.notificaciones_email) {
+        const confirmar = window.confirm(
+          `${mensaje}\n\n¿Deseas enviar invitaciones por email a los ${config.usuarios_autorizados.length} usuario(s) autorizado(s)?`
+        );
+
+        if (confirmar) {
+          await enviarInvitaciones(formularioId);
+        }
+      } else {
+        alert(mensaje);
       }
-    } else {
-      alert(mensaje);
+
+      navigate("/home");
+    } catch (e) {
+      console.error("❌ Error en handleSave:", e);
+      alert("Fallo de conexión al crear formulario");
     }
-    
-    navigate("/home");
-  } catch (e) {
-    console.error("❌ Error en handleSave:", e);
-    alert("Fallo de conexión al crear formulario");
-  }
-};
+  };
 
 
   return (
     <main className="create-form-main">
       {/* Botón Volver */}
       <div className="create-back-container">
-        <button 
-          className="create-btn-back" 
+        <button
+          className="create-btn-back"
           onClick={() => navigate("/home")}
         >
           <span className="create-back-arrow">←</span>
@@ -329,7 +329,7 @@ const enviarInvitaciones = async (formId) => {
           className="create-input"
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
-          style={{marginBottom: 5}}
+          style={{ marginBottom: 5 }}
         />
         <label className="create-label">Descripción</label>
         <textarea
@@ -347,7 +347,7 @@ const enviarInvitaciones = async (formId) => {
                 className="create-select"
                 value={q.tipo}
                 onChange={(e) => updateQuestion(idx, { tipo: e.target.value })}
-                style={{marginLeft: 10}}
+                style={{ marginLeft: 10 }}
               >
                 <option value="texto_libre">Texto libre</option>
                 <option value="opcion_multiple">Opción múltiple</option>
@@ -361,7 +361,7 @@ const enviarInvitaciones = async (formId) => {
               <input
                 className="create-input"
                 value={q.enunciado}
-                style= {{marginTop: 10}}
+                style={{ marginTop: 10 }}
                 onChange={(e) =>
                   updateQuestion(idx, { enunciado: e.target.value })
                 }
@@ -390,7 +390,7 @@ const enviarInvitaciones = async (formId) => {
                     className="create-input"
                     type="number"
                     value={q.validaciones?.longitud_minima ?? ""}
-                    style= {{marginTop: 10}}
+                    style={{ marginTop: 10 }}
                     onChange={(e) => {
                       const v = {
                         ...(q.validaciones || {}),
@@ -406,7 +406,7 @@ const enviarInvitaciones = async (formId) => {
                     className="create-input"
                     type="number"
                     value={q.validaciones?.longitud_maxima ?? ""}
-                    style= {{marginTop: 10}}
+                    style={{ marginTop: 10 }}
                     onChange={(e) => {
                       const v = {
                         ...(q.validaciones || {}),
@@ -428,7 +428,7 @@ const enviarInvitaciones = async (formId) => {
                     className="create-input"
                     type="number"
                     value={q.validaciones?.valor_minimo ?? ""}
-                    style= {{marginTop: 10}}
+                    style={{ marginTop: 10 }}
                     onChange={(e) => {
                       const v = {
                         ...(q.validaciones || {}),
@@ -444,7 +444,7 @@ const enviarInvitaciones = async (formId) => {
                     className="create-input"
                     type="number"
                     value={q.validaciones?.valor_maximo ?? ""}
-                    style= {{marginTop: 10}}
+                    style={{ marginTop: 10 }}
                     onChange={(e) => {
                       const v = {
                         ...(q.validaciones || {}),
@@ -545,8 +545,8 @@ const enviarInvitaciones = async (formId) => {
                 type="checkbox"
                 checked={config.es_publico}
                 onChange={(e) => {
-                  setConfig({ 
-                    ...config, 
+                  setConfig({
+                    ...config,
                     es_publico: e.target.checked,
                     // Si se marca como público, limpiar la lista de usuarios
                     usuarios_autorizados: e.target.checked ? [] : config.usuarios_autorizados
@@ -563,7 +563,7 @@ const enviarInvitaciones = async (formId) => {
                 <label className="create-config-label" style={{ marginTop: 15, marginBottom: 8 }}>
                   Usuarios autorizados:
                 </label>
-                
+
                 {/* Input para agregar email */}
                 <div className="create-email-input-container">
                   <input
@@ -642,7 +642,7 @@ const enviarInvitaciones = async (formId) => {
         )}
         {/* 🆕 FIN NUEVA SECCIÓN */}
 
-        
+
 
         <label className="create-config-label">
           Fecha límite:
