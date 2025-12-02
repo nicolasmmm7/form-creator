@@ -21,7 +21,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 SECRET_KEY = 'django-insecure-potb@08voa!#63^u#qa0xn9x$!l(01$hs#rmi)%3c66hy$v82u'
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # -------------------------------
@@ -147,6 +147,7 @@ USE_TZ = True
 # -------------------------------
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
