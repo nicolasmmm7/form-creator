@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev &
 COPY backend/requirements.txt /app/backend/requirements.txt
 
 # Instalar dependencias de Python
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt
 
 # Instalar gunicorn explícitamente para producción
 RUN pip install gunicorn
