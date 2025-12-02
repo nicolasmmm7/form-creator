@@ -3,11 +3,12 @@ import Login from "./pages/login";
 import Register from "./pages/register";
 import Home from "./pages/home";
 import CreateForm from "./pages/CreateForm";
-import PasswordReset from "./pages/password-reset"; 
+import PasswordReset from "./pages/password-reset";
 import ProfilePage from "./pages/ProfilePage";
 import AnswerForm from "./pages/AnswerForm";
 import ThankYou from "./pages/ThankYou";
 import EditSuccess from "./pages/EditSuccess";
+import FormStats from "./pages/FormStats";
 
 
 import "./css/Auth.css";
@@ -27,12 +28,15 @@ function App() {
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        
+
         <Route path="/home" element={<Home />} />
         <Route path="/create/:formId?" element={<CreateForm />} />
         <Route path="/password-reset" element={<PasswordReset />} />
         <Route path="/ProfilePage" element={<ProfilePage />} />
         <Route path="/editSuccess" element={<EditSuccess />} />
+
+        {/* Route for Statistics */}
+        <Route path="/form/:formId/stats" element={<FormStats />} />
       </Routes>
     </Router>
   );
