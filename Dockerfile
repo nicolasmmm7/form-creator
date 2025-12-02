@@ -1,37 +1,32 @@
-# Usar una imagen base oficial de Python
+# Use an official Python runtime as a parent image
 FROM python:3.11-slim
 
-# Establecer el directorio de trabajo en el contenedor
-WORKDIR /app
-
-# Establecer variables de entorno
-# Evita que Python genere archivos .pyc
+# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
-# Evita que Python guarde en búfer stdout y stderr
 ENV PYTHONUNBUFFERED=1
 
-# Instalar dependencias del sistema si son necesarias
-RUN apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev && rm -rf /var/lib/apt/lists/*
+# Set work directory
+WORKDIR /app
 
-# Copiar el archivo de requerimientos
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    gcc \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install python dependencies
 COPY backend/requirements.txt /app/backend/requirements.txt
+RUN pip install --upgrade pip && pip install -r backend/requirements.txt
 
-# Instalar dependencias de Python
-RUN pip install --no-cache-dir -r backend/requirements.txt
-
-# Instalar gunicorn explícitamente para producción
-RUN pip install gunicorn
-
-# Copiar el resto del código del proyecto
+# Copy the entire project
 COPY . /app/
 
-# Recolectar archivos estáticos (opcional, depende de si usas whitenoise o similar, 
-# pero es buena práctica tenerlo si Django maneja estáticos)
-# RUN python manage.py collectstatic --noinput
+# Make sure start.sh is executable
+RUN chmod +x /app/start.sh
 
-# Exponer el puerto que usará la aplicación (Railway usa PORT dinámico, pero documentamos 8000)
+# Expose port (Railway sets PORT env var, but good practice to document)
 EXPOSE 8000
 
-# Comando para correr la aplicación usando gunicorn
-# Se usa la variable de entorno PORT que Railway provee automáticamente
-CMD gunicorn formCreatorApp.wsgi:application --bind 0.0.0.0:$PORT
+# Run the start script
+CMD ["/bin/bash", "/app/start.sh"]
