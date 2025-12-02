@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import confetti from "canvas-confetti";
-import "../css/EditSuccess.css";
+import "../css/ThankYou.css";
 
 import celebrationsGirl from "../media/success1.png";
 import celebrationsBoy from "../media/success2.png";

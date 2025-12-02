@@ -1,0 +1,240 @@
+/* ThankYou Page Styles */
+
+.thankyou-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.thankyou-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(82, 200, 140, 0.05) 0%, transparent 70%);
+  animation: pulse 4s ease-in-out infinite;
+}
+
+.success-icon {
+  font-size: 4rem;
+  margin-bottom: 24px;
+  animation: bounceIn 0.8s ease-out;
+}
+
+.success-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-titulo);
+  margin-bottom: 16px;
+  animation: slideDown 0.6s ease-out;
+}
+
+.success-description {
+  font-size: 1.1rem;
+  color: var(--color-texto-secundario);
+  line-height: 1.6;
+  margin-bottom: 36px;
+  animation: slideDown 0.8s ease-out;
+}
+
+.success-images {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  margin-bottom: 40px;
+  animation: fadeIn 1s ease-out 0.3s backwards;
+}
+
+.celebration-img {
+  height: 160px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+}
+
+.celebration-img:hover {
+  transform: scale(1.15) rotate(-5deg);
+  filter: drop-shadow(0 8px 20px rgba(82, 200, 140, 0.3));
+}
+
+.celebration-img:nth-child(2):hover {
+  transform: scale(1.15) rotate(5deg);
+}
+
+.success-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  animation: fadeIn 1s ease-out 0.5s backwards;
+}
+
+.success-btn {
+  padding: 16px 40px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.success-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.success-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.success-btn.primary {
+  background: linear-gradient(135deg, var(--color-primario), var(--color-secundario));
+  color: white;
+  box-shadow: 0 4px 15px rgba(82, 200, 140, 0.3);
+}
+
+.success-btn.primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(82, 200, 140, 0.4);
+}
+
+.success-btn.secondary {
+  background: white;
+  color: var(--color-primario);
+  border: 2px solid var(--color-primario);
+}
+
+.success-btn.secondary:hover {
+  background: var(--color-primario);
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(76, 154, 146, 0.3);
+}
+
+.success-link {
+  background: none;
+  border: none;
+  color: var(--color-secundario);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 8px 16px;
+  border-radius: 8px;
+  animation: fadeIn 1s ease-out 0.7s backwards;
+}
+
+.success-link:hover {
+  color: var(--color-primario);
+  background: rgba(82, 200, 140, 0.1);
+  transform: translateX(5px);
+}
+
+/* Animaciones */
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-180deg);
+  }
+  50% {
+    transform: scale(1.1) rotate(10deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .success-title {
+    font-size: 2rem;
+  }
+
+  .success-description {
+    font-size: 1rem;
+  }
+
+  .success-images {
+    gap: 20px;
+  }
+
+  .celebration-img {
+    height: 120px;
+  }
+
+  .success-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .success-btn {
+    width: 100%;
+    padding: 14px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .success-card {
+    padding: 30px 20px;
+  }
+
+  .success-icon {
+    font-size: 3rem;
+  }
+
+  .success-title {
+    font-size: 1.7rem;
+  }
+
+  .celebration-img {
+    height: 100px;
+  }
+}
