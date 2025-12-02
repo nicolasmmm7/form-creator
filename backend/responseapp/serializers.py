@@ -4,6 +4,8 @@ from bson import ObjectId
 from .models import RespuestaFormulario, Respondedor, RespuestaPregunta
 from formapp.models import Formulario
 from mongoengine.errors import DoesNotExist
+from utils.email_utils import send_form_responses_copy
+
 
 class RespuestaFormularioSerializer(serializers.Serializer):
     formulario = serializers.CharField()
@@ -117,25 +119,37 @@ class RespuestaFormularioSerializer(serializers.Serializer):
         print(f"   └─ Navegador: {rf.navegador}, Dispositivo: {rf.dispositivo}, Tiempo: {rf.tiempo_completacion}s")
         
         # TODO: Enviar copia por correo si enviar_copia == True
+        # 🆕 Enviar copia por correo — AHORA FUNCIONA
         if enviar_copia and email:
-            print(f"📧 Enviar copia a {email} (funcionalidad pendiente)")
+            respuestas_list = []
+            for rp in respuestas_objs:
+                respuestas_list.append({
+                    "pregunta": rp.pregunta_id,
+                    "respuesta": ", ".join(rp.valor) if isinstance(rp.valor, list) else rp.valor
+                })
+
+            send_form_responses_copy(
+                recipient_email=email,
+                form_title=form_obj.titulo,
+                respuestas_list=respuestas_list
+            )
+            print("📧 Copia enviada correctamente desde POST")
         
         return rf
 
     def update(self, instance, validated_data):
         """
-        Actualizar una respuesta existente
+        Actualizar una respuesta existente + enviar email si enviar_copia=True
         """
         form_obj = validated_data.pop("_form_obj", None)
         respondedor_data = validated_data.pop("respondedor", {})
         tiempo_completacion = validated_data.pop("tiempo_completacion", instance.tiempo_completacion)
         enviar_copia = validated_data.pop("enviar_copia", False)
         respuestas_data = validated_data.pop("respuestas", [])
-        
-        # Actualizar tiempo de completación
+
         instance.tiempo_completacion = tiempo_completacion
-        
-        # Actualizar respuestas
+
+        # Reconstruir respuestas
         respuestas_objs = []
         for rdata in respuestas_data:
             rp = RespuestaPregunta(
@@ -144,8 +158,26 @@ class RespuestaFormularioSerializer(serializers.Serializer):
                 valor=rdata.get("valor", [])
             )
             respuestas_objs.append(rp)
-        
+
         instance.respuestas = respuestas_objs
         instance.save()
-        
+
+        # 🆕 Enviar copia por correo también en UPDATE
+        email = respondedor_data.get("email") or (instance.respondedor.email if instance.respondedor else None)
+
+        if enviar_copia and email:
+            respuestas_list = []
+            for rp in respuestas_objs:
+                respuestas_list.append({
+                    "pregunta": rp.pregunta_id,
+                    "respuesta": ", ".join(rp.valor) if isinstance(rp.valor, list) else rp.valor
+                })
+
+            send_form_responses_copy(
+                recipient_email=email,
+                form_title=form_obj.titulo if form_obj else instance.formulario.titulo,
+                respuestas_list=respuestas_list
+            )
+            print("📧 Copia enviada correctamente desde PUT")
+
         return instance
