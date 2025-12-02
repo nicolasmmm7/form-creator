@@ -10,4 +10,4 @@ python3 manage.py migrate
 python3 manage.py collectstatic --noinput
 
 # Start Gunicorn server
-gunicorn siged.wsgi:application --bind 0.0.0.0:$PORT
+gunicorn formCreatorApp.wsgi:application --bind 0.0.0.0:$PORT

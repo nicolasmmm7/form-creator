@@ -70,4 +70,3 @@ def initialize_firebase():
 
 # NO ejecutar código aquí, solo definir la función
 # La función se llamará desde settings.py
-```
