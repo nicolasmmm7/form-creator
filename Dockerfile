@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install python dependencies
 COPY backend/requirements.txt /app/backend/requirements.txt
-RUN pip install --upgrade pip && pip install -r backend/requirements.txt
+RUN pip install --upgrade pip && pip install -r backend/requirements.txt gunicorn
 
 # Copy the entire project
 COPY . /app/
