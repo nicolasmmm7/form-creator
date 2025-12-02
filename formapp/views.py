@@ -5,6 +5,7 @@ from bson import ObjectId
 from formapp.models import Formulario, ConfiguracionFormulario
 from formapp.serializers import FormularioSerializer
 from utils.email_utils import send_form_invitation
+from mongoengine.errors import DoesNotExist
 
 
 class FormularioListCreateAPI(APIView):
@@ -285,21 +286,43 @@ class EnviarInvitacionesAPI(APIView):
     """
     POST: Enviar invitaciones por email a usuarios autorizados
     """
+    
     def post(self, request, form_id):
+        print(f"🔔 Solicitud de invitaciones para formulario: {form_id}")
+        
         try:
+            # Importar aquí para evitar errores de importación circular
+            from utils.email_utils import send_form_invitation
+            
             # Obtener el formulario
-            form = Formulario.objects.get(id=ObjectId(form_id))
+            try:
+                form = Formulario.objects.get(id=ObjectId(form_id))
+            except DoesNotExist:
+                print(f"❌ Formulario {form_id} no encontrado")
+                return Response(
+                    {"error": "Formulario no encontrado"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
             
             # Validar que el usuario sea el administrador
-            user = request.data.get("user_id")
-            if str(form.administrador.id) != str(user):
+            user_id = request.data.get("user_id")
+            admin_id = str(form.administrador.id) if form.administrador else None
+            
+            print(f"👤 Usuario solicitante: {user_id}")
+            print(f"👤 Administrador del form: {admin_id}")
+            
+            if str(user_id) != admin_id:
                 return Response(
                     {"error": "No tienes permiso para enviar invitaciones"},
                     status=status.HTTP_403_FORBIDDEN
                 )
             
             # Obtener usuarios autorizados
-            usuarios = form.configuracion.usuarios_autorizados if form.configuracion else []
+            usuarios = []
+            if hasattr(form, 'configuracion') and form.configuracion:
+                usuarios = getattr(form.configuracion, 'usuarios_autorizados', [])
+            
+            print(f"📧 Usuarios autorizados: {usuarios}")
             
             if not usuarios:
                 return Response(
@@ -312,40 +335,51 @@ class EnviarInvitacionesAPI(APIView):
             form_link = f"http://localhost:3000/form/{form_id}/answer"
             
             # 🔗 Para producción (descomentar cuando esté desplegado)
-            # form_link = f"https://tudominio.com/form/{form_id}/answer"
+            # origin = request.META.get('HTTP_ORIGIN', 'https://tudominio.com')
+            # form_link = f"{origin}/form/{form_id}/answer"
+            
+            print(f"🔗 Link del formulario: {form_link}")
             
             # Enviar emails
             enviados = 0
             fallidos = []
             
             for email in usuarios:
-                exito = send_form_invitation(
-                    recipient_email=email,
-                    form_title=form.titulo,
-                    form_description=form.descripcion or "",
-                    form_link=form_link
-                )
-                
-                if exito:
-                    enviados += 1
-                else:
+                print(f"📤 Enviando invitación a: {email}")
+                try:
+                    exito = send_form_invitation(
+                        recipient_email=email,
+                        form_title=form.titulo,
+                        form_description=form.descripcion or "",
+                        form_link=form_link
+                    )
+                    
+                    if exito:
+                        enviados += 1
+                        print(f"✅ Invitación enviada a {email}")
+                    else:
+                        fallidos.append(email)
+                        print(f"❌ Falló el envío a {email}")
+                except Exception as e:
+                    print(f"❌ Error enviando a {email}: {e}")
                     fallidos.append(email)
             
-            return Response({
+            resultado = {
                 "message": f"Invitaciones enviadas: {enviados}/{len(usuarios)}",
                 "enviados": enviados,
                 "total": len(usuarios),
                 "fallidos": fallidos
-            }, status=status.HTTP_200_OK)
+            }
             
-        except Formulario.DoesNotExist:
-            return Response(
-                {"error": "Formulario no encontrado"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            print(f"📊 Resultado final: {resultado}")
+            
+            return Response(resultado, status=status.HTTP_200_OK)
+            
         except Exception as e:
-            print("❌ Error al enviar invitaciones:", e)
+            import traceback
+            print("❌ Error general al enviar invitaciones:")
+            traceback.print_exc()
             return Response(
-                {"error": str(e)},
+                {"error": f"Error interno: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
