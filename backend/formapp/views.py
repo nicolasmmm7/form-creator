@@ -332,7 +332,7 @@ class EnviarInvitacionesAPI(APIView):
             
             # Construir el enlace del formulario
             # 🔗 Para desarrollo local
-            form_link = f"https://form-creator-production.up.railway.app/form/{form_id}/answer"
+            form_link = f"https://form-creator-rosy.vercel.app/form/{form_id}/answer"
             
             # 🔗 Para producción (descomentar cuando esté desplegado)
             # origin = request.META.get('HTTP_ORIGIN', 'https://tudominio.com')
