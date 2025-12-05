@@ -30,6 +30,80 @@ class RespuestaFormularioSerializer(serializers.Serializer):
             raise serializers.ValidationError({"formulario": "Formulario no encontrado."})
         
         data["_form_obj"] = form_obj
+
+        # 🆕 VALIDACIÓN DE PREGUNTAS OBLIGATORIAS
+        respuestas_list = data.get("respuestas", [])
+        respuestas_map = {r.get("pregunta_id"): r.get("valor") for r in respuestas_list}
+        
+        errores = {}
+        for pregunta in form_obj.preguntas:
+            if pregunta.obligatorio:
+                pid = pregunta.id
+                # Verificar si la pregunta fue respondida
+                if pid not in respuestas_map:
+                     errores[f"pregunta_{pid}"] = f"La pregunta '{pregunta.enunciado}' es obligatoria."
+                else:
+                    valor = respuestas_map[pid]
+                    # Verificar si la respuesta está vacía (lista vacía o string vacío)
+                    if not valor or (isinstance(valor, list) and len(valor) == 0):
+                        errores[f"pregunta_{pid}"] = f"La pregunta '{pregunta.enunciado}' no puede estar vacía."
+
+        if errores:
+            raise serializers.ValidationError(errores)
+
+        # 🆕 VALIDACIÓN DE TIPOS DE PREGUNTAS (escala numérica y texto libre)
+        for pregunta in form_obj.preguntas:
+            pid = pregunta.id
+            
+            # Solo validar si la pregunta fue respondida
+            if pid in respuestas_map:
+                valor = respuestas_map[pid]
+                
+                # Validación para ESCALA NUMÉRICA
+                if pregunta.tipo == 'escala_numerica' and pregunta.validaciones:
+                    # Verificar que el valor sea numérico
+                    try:
+                        # El valor puede venir como lista o string
+                        if isinstance(valor, list):
+                            if len(valor) == 0:
+                                continue  # Ya validado en obligatorio
+                            valor_numerico = float(valor[0])
+                        else:
+                            valor_numerico = float(valor)
+                        
+                        # Validar rango
+                        if pregunta.validaciones.valor_minimo is not None:
+                            if valor_numerico < pregunta.validaciones.valor_minimo:
+                                errores[f"pregunta_{pid}"] = f"El valor debe ser al menos {pregunta.validaciones.valor_minimo}."
+                        
+                        if pregunta.validaciones.valor_maximo is not None:
+                            if valor_numerico > pregunta.validaciones.valor_maximo:
+                                errores[f"pregunta_{pid}"] = f"El valor no puede ser mayor que {pregunta.validaciones.valor_maximo}."
+                    
+                    except (ValueError, TypeError):
+                        errores[f"pregunta_{pid}"] = f"La pregunta '{pregunta.enunciado}' requiere un valor numérico."
+                
+                # Validación para TEXTO LIBRE
+                elif pregunta.tipo == 'texto_libre' and pregunta.validaciones:
+                    # El valor puede venir como lista o string
+                    texto = valor[0] if isinstance(valor, list) and len(valor) > 0 else valor
+                    
+                    if isinstance(texto, str):
+                        longitud = len(texto)
+                        
+                        # Validar longitud mínima
+                        if pregunta.validaciones.longitud_minima is not None:
+                            if longitud < pregunta.validaciones.longitud_minima:
+                                errores[f"pregunta_{pid}"] = f"El texto debe tener al menos {pregunta.validaciones.longitud_minima} caracteres."
+                        
+                        # Validar longitud máxima
+                        if pregunta.validaciones.longitud_maxima is not None:
+                            if longitud > pregunta.validaciones.longitud_maxima:
+                                errores[f"pregunta_{pid}"] = f"El texto no puede exceder {pregunta.validaciones.longitud_maxima} caracteres."
+
+        if errores:
+            raise serializers.ValidationError(errores)
+
         return data
 
     def create(self, validated_data):

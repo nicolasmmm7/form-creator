@@ -24,6 +24,20 @@ class UsuarioSerializer(serializers.Serializer):
     empresa = EmpresaSerializer(required=False)
     perfil = PerfilSerializer(required=False)
 
+    def validate_email(self, value):
+        """
+        Verificar si el email ya existe en la base de datos.
+        Si existe, lanzar un error de validación.
+        """
+        # Si estamos actualizando (self.instance no es None),
+        # permitimos el mismo email si pertenece al usuario actual.
+        if self.instance and self.instance.email == value:
+            return value
+
+        if Usuario.objects(email=value).first():
+            raise serializers.ValidationError("Este correo ya está registrado.")
+        return value
+
     def create(self, validated_data):
         empresa_data = validated_data.pop('empresa', None)
         perfil_data = validated_data.pop('perfil', None)

@@ -104,7 +104,10 @@ export const registrarUsuario = async (usuarioData) => {
 
     if (!response.ok) {
       console.error("❌ Error al crear usuario:", data);
-      throw new Error(data.error || 'Error al registrar usuario');
+      // 🆕 Lanzar el objeto completo de error para que el frontend pueda leerlo
+      const error = new Error(data.error || 'Error al registrar usuario');
+      error.data = data;
+      throw error;
     }
 
     console.log("✅ Usuario creado:", data);

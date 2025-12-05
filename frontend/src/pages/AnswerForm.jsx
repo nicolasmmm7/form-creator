@@ -213,10 +213,39 @@ function AnswerForm() {
     return !requiereLogin || !!user;
   }
 
-  const handleChange = (pid, tipo, value) => {
+  const handleChange = (pregunta, value) => {
+    let newValue = value;
+    const { id: pid, tipo, validaciones } = pregunta;
+
+    // 🔒 RESTRICCIÓN: Texto libre (Longitud máxima)
+    if (tipo === "texto_libre" && validaciones?.longitud_maxima) {
+      if (newValue.length > validaciones.longitud_maxima) {
+        return; // Bloquear entrada si excede
+      }
+    }
+
+    // 🔒 RESTRICCIÓN: Escala numérica
+    if (tipo === "escala_numerica") {
+      if (newValue === "") {
+        // Permitir borrar
+      } else {
+        // Bloquear si no es número
+        if (isNaN(newValue)) return;
+
+        const num = parseFloat(newValue);
+
+        // Auto-corregir máximo
+        if (validaciones?.valor_maximo !== undefined && num > validaciones.valor_maximo) {
+          newValue = validaciones.valor_maximo;
+        }
+
+        // Nota: No corregimos mínimo mientras escribe para no bloquear la entrada (ej: escribir "10" con min "5")
+      }
+    }
+
     setRespuestas((prev) => ({
       ...prev,
-      [pid]: { tipo, valor: value },
+      [pid]: { tipo, valor: newValue },
     }));
   };
 
@@ -370,13 +399,20 @@ function AnswerForm() {
             </label>
 
             {p.tipo === "texto_libre" && (
-              <input
-                className="create-input"
-                type="text"
-                placeholder="Tu respuesta..."
-                value={respuestas[p.id]?.valor || ""}  // ⬅ precarga
-                onChange={(e) => handleChange(p.id, p.tipo, e.target.value)}
-              />
+              <>
+                <input
+                  className="create-input"
+                  type="text"
+                  placeholder="Tu respuesta..."
+                  value={respuestas[p.id]?.valor || ""}  // ⬅ precarga
+                  onChange={(e) => handleChange(p, e.target.value)}
+                />
+                {p.validaciones?.longitud_maxima && (
+                  <small style={{ color: "gray", display: "block", marginTop: "4px" }}>
+                    {respuestas[p.id]?.valor?.length || 0} / {p.validaciones.longitud_maxima} caracteres
+                  </small>
+                )}
+              </>
             )}
 
             {p.tipo === "opcion_multiple" && (
@@ -390,7 +426,7 @@ function AnswerForm() {
                       className="create-checkbox"
                       value={o.texto}
                       checked={respuestas[p.id]?.valor === o.texto}  // ⬅ precarga
-                      onChange={(e) => handleChange(p.id, p.tipo, e.target.value)}
+                      onChange={(e) => handleChange(p, e.target.value)}
                     />
                     <label className="create-label">{o.texto}</label>
                   </div>
@@ -411,9 +447,9 @@ function AnswerForm() {
                       onChange={(e) => {
                         const current = respuestas[p.id]?.valor || [];
                         if (e.target.checked)
-                          handleChange(p.id, p.tipo, [...current, e.target.value]);
+                          handleChange(p, [...current, e.target.value]);
                         else
-                          handleChange(p.id, p.tipo, current.filter((v) => v !== e.target.value));
+                          handleChange(p, current.filter((v) => v !== e.target.value));
                       }}
                     />
                     <label className="create-label">{o.texto}</label>
@@ -431,8 +467,13 @@ function AnswerForm() {
                   min={p.validaciones.valor_minimo || 0}
                   max={p.validaciones.valor_maximo || 10}
                   value={respuestas[p.id]?.valor || ""} // ⬅ precarga
-                  onChange={(e) => handleChange(p.id, p.tipo, e.target.value)}
+                  onChange={(e) => handleChange(p, e.target.value)}
                 />
+                {p.validaciones && (
+                  <small style={{ color: "gray", display: "block", marginTop: "4px" }}>
+                    Rango permitido: {p.validaciones.valor_minimo ?? 0} - {p.validaciones.valor_maximo ?? 10}
+                  </small>
+                )}
               </div>
             )}
           </div>
