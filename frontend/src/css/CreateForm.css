@@ -10,12 +10,12 @@
 /* Contenedor principal con layout de dos columnas */
 .create-form-main {
   display: flex;
-  
+
   flex-direction: row;
   gap: 2rem;
   padding: rem;
   max-width: 1600px;
-  margin: 2rem auto 0 auto; 
+  margin: 2rem auto 0 auto;
   width: 95vw;
 }
 
@@ -847,15 +847,19 @@
 
 /* === Fondo fijo real (sin reinicio al hacer scroll) === */
 body {
-  position: relative; /* base para el pseudo-elemento */
-  background: transparent; /* quitamos el degradado directo */
+  position: relative;
+  /* base para el pseudo-elemento */
+  background: transparent;
+  /* quitamos el degradado directo */
 }
 
 body::before {
   content: "";
   position: fixed;
-  inset: 0; /* top:0; right:0; bottom:0; left:0 */
-  z-index: -1; /* detrás de todo */
+  inset: 0;
+  /* top:0; right:0; bottom:0; left:0 */
+  z-index: -1;
+  /* detrás de todo */
   background: var(--color-fondo);
   background-repeat: no-repeat;
   background-size: cover;
@@ -888,8 +892,10 @@ body::before {
 /* === MODAL GENERAL === */
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
@@ -1209,5 +1215,18 @@ body::before {
   .answer-copy-checkbox input[type="checkbox"] {
     width: 18px;
     height: 18px;
+  }
+}
+
+/* ======= Animación para errores de validación ======= */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

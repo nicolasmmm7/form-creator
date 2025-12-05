@@ -41,12 +41,12 @@ class RespuestaFormularioSerializer(serializers.Serializer):
                 pid = pregunta.id
                 # Verificar si la pregunta fue respondida
                 if pid not in respuestas_map:
-                     errores[f"pregunta_{pid}"] = f"La pregunta '{pregunta.enunciado}' es obligatoria."
+                     errores[f"pregunta_{pid}"] = f"¡Oops! Esta pregunta es obligatoria, no olvides responderla 📝"
                 else:
                     valor = respuestas_map[pid]
                     # Verificar si la respuesta está vacía (lista vacía o string vacío)
                     if not valor or (isinstance(valor, list) and len(valor) == 0):
-                        errores[f"pregunta_{pid}"] = f"La pregunta '{pregunta.enunciado}' no puede estar vacía."
+                        errores[f"pregunta_{pid}"] = f"¡Oops! Esta pregunta es obligatoria, no olvides responderla 📝"
 
         if errores:
             raise serializers.ValidationError(errores)
@@ -74,14 +74,14 @@ class RespuestaFormularioSerializer(serializers.Serializer):
                         # Validar rango
                         if pregunta.validaciones.valor_minimo is not None:
                             if valor_numerico < pregunta.validaciones.valor_minimo:
-                                errores[f"pregunta_{pid}"] = f"El valor debe ser al menos {pregunta.validaciones.valor_minimo}."
+                                errores[f"pregunta_{pid}"] = f"Por favor ingresa un número mayor o igual a {pregunta.validaciones.valor_minimo} 😊"
                         
                         if pregunta.validaciones.valor_maximo is not None:
                             if valor_numerico > pregunta.validaciones.valor_maximo:
-                                errores[f"pregunta_{pid}"] = f"El valor no puede ser mayor que {pregunta.validaciones.valor_maximo}."
+                                errores[f"pregunta_{pid}"] = f"Por favor ingresa un número menor o igual a {pregunta.validaciones.valor_maximo} 😊"
                     
                     except (ValueError, TypeError):
-                        errores[f"pregunta_{pid}"] = f"La pregunta '{pregunta.enunciado}' requiere un valor numérico."
+                        errores[f"pregunta_{pid}"] = f"Ups, necesitamos que ingreses un número válido aquí 🔢"
                 
                 # Validación para TEXTO LIBRE
                 elif pregunta.tipo == 'texto_libre' and pregunta.validaciones:
@@ -94,12 +94,12 @@ class RespuestaFormularioSerializer(serializers.Serializer):
                         # Validar longitud mínima
                         if pregunta.validaciones.longitud_minima is not None:
                             if longitud < pregunta.validaciones.longitud_minima:
-                                errores[f"pregunta_{pid}"] = f"El texto debe tener al menos {pregunta.validaciones.longitud_minima} caracteres."
+                                errores[f"pregunta_{pid}"] = f"Tu respuesta es un poco corta. Por favor escribe al menos {pregunta.validaciones.longitud_minima} caracteres ✍️"
                         
                         # Validar longitud máxima
                         if pregunta.validaciones.longitud_maxima is not None:
                             if longitud > pregunta.validaciones.longitud_maxima:
-                                errores[f"pregunta_{pid}"] = f"El texto no puede exceder {pregunta.validaciones.longitud_maxima} caracteres."
+                                errores[f"pregunta_{pid}"] = f"Tu respuesta es un poco larga. Por favor no excedas {pregunta.validaciones.longitud_maxima} caracteres ✂️"
 
         if errores:
             raise serializers.ValidationError(errores)

@@ -12,6 +12,7 @@ function AnswerForm() {
   const location = useLocation();
   const [formulario, setFormulario] = useState(null);
   const [respuestas, setRespuestas] = useState({});
+  const [errors, setErrors] = useState({}); // 🆕 Estado para errores de validación
   const [mensaje, setMensaje] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [existingResponse, setExistingResponse] = useState(null);
@@ -247,6 +248,15 @@ function AnswerForm() {
       ...prev,
       [pid]: { tipo, valor: newValue },
     }));
+
+    // 🆕 Limpiar error al modificar
+    if (errors[`pregunta_${pid}`]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[`pregunta_${pid}`];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -335,6 +345,25 @@ function AnswerForm() {
           navigate(`/editSuccess?edit=${isEditing}`);
         } else {
           navigate(`/thankyou?edit=${isEditing}`);
+        }
+      } else if (res.status === 400) {
+        // 🆕 Manejo de errores de validación del backend
+        const newErrors = {};
+        let hasFieldErrors = false;
+
+        // data puede ser { "pregunta_1": ["Error..."], "formulario": ["Error..."] }
+        Object.keys(data).forEach((key) => {
+          if (key.startsWith("pregunta_")) {
+            newErrors[key] = Array.isArray(data[key]) ? data[key][0] : data[key];
+            hasFieldErrors = true;
+          }
+        });
+
+        if (hasFieldErrors) {
+          setErrors(newErrors);
+          setMensaje("💡 Por favor revisa los campos marcados en rojo para continuar");
+        } else {
+          setMensaje(`⚠️ Error: ${data.error || JSON.stringify(data)}`);
         }
       } else if (res.status === 401) {
         localStorage.setItem(`pending_answers_${id}`, JSON.stringify(respuestas));
@@ -474,6 +503,28 @@ function AnswerForm() {
                     Rango permitido: {p.validaciones.valor_minimo ?? 0} - {p.validaciones.valor_maximo ?? 10}
                   </small>
                 )}
+              </div>
+            )}
+
+            {/* 🆕 Mostrar error específico de la pregunta */}
+            {errors[`pregunta_${p.id}`] && (
+              <div style={{
+                backgroundColor: "#fee2e2",
+                border: "1px solid #fca5a5",
+                borderRadius: "8px",
+                padding: "0.75rem",
+                marginTop: "0.75rem",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "0.5rem",
+                animation: "slideIn 0.3s ease-out"
+              }}>
+                <span style={{ fontSize: "1.25rem", flexShrink: 0 }}>⚠️</span>
+                <span style={{
+                  color: "#991b1b",
+                  fontSize: "0.875rem",
+                  lineHeight: "1.5"
+                }}>{errors[`pregunta_${p.id}`]}</span>
               </div>
             )}
           </div>
