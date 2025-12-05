@@ -20,14 +20,19 @@ class RespuestaFormularioSerializer(serializers.Serializer):
         """
         Validar que el formulario exista y adjuntarlo para uso posterior
         """
-        form_id_str = data.get("formulario")
-        if not form_id_str:
-            raise serializers.ValidationError({"formulario": "Campo requerido."})
-        
-        try:
-            form_obj = Formulario.objects.get(id=ObjectId(form_id_str))
-        except DoesNotExist:
-            raise serializers.ValidationError({"formulario": "Formulario no encontrado."})
+        # ✅ Si es una edición (UPDATE), usar el formulario de la instancia existente
+        if self.instance:
+            form_obj = self.instance.formulario
+        else:
+            # Es una creación nueva (POST), obtener desde el payload
+            form_id_str = data.get("formulario")
+            if not form_id_str:
+                raise serializers.ValidationError({"formulario": "Campo requerido."})
+            
+            try:
+                form_obj = Formulario.objects.get(id=ObjectId(form_id_str))
+            except DoesNotExist:
+                raise serializers.ValidationError({"formulario": "Formulario no encontrado."})
         
         data["_form_obj"] = form_obj
 

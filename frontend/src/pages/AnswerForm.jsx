@@ -436,9 +436,32 @@ function AnswerForm() {
                   value={respuestas[p.id]?.valor || ""}  // ⬅ precarga
                   onChange={(e) => handleChange(p, e.target.value)}
                 />
-                {p.validaciones?.longitud_maxima && (
+                {/* Indicadores de longitud mejorados */}
+                {(p.validaciones?.longitud_minima || p.validaciones?.longitud_maxima) && (
                   <small style={{ color: "gray", display: "block", marginTop: "4px" }}>
-                    {respuestas[p.id]?.valor?.length || 0} / {p.validaciones.longitud_maxima} caracteres
+                    {/* Contador actual */}
+                    {respuestas[p.id]?.valor?.length || 0} caracteres
+
+                    {/* Rango permitido */}
+                    {p.validaciones?.longitud_minima && p.validaciones?.longitud_maxima && (
+                      <> (mínimo: {p.validaciones.longitud_minima}, máximo: {p.validaciones.longitud_maxima})</>
+                    )}
+                    {p.validaciones?.longitud_minima && !p.validaciones?.longitud_maxima && (
+                      <> (mínimo: {p.validaciones.longitud_minima})</>
+                    )}
+                    {!p.validaciones?.longitud_minima && p.validaciones?.longitud_maxima && (
+                      <> (máximo: {p.validaciones.longitud_maxima})</>
+                    )}
+
+                    {/* Advertencia visual si está debajo del mínimo */}
+                    {p.validaciones?.longitud_minima &&
+                      respuestas[p.id]?.valor &&
+                      respuestas[p.id].valor.length > 0 &&
+                      respuestas[p.id].valor.length < p.validaciones.longitud_minima && (
+                        <span style={{ color: "#f59e0b", marginLeft: "8px" }}>
+                          ⚠️ Faltan {p.validaciones.longitud_minima - respuestas[p.id].valor.length} caracteres más
+                        </span>
+                      )}
                   </small>
                 )}
               </>
@@ -493,14 +516,30 @@ function AnswerForm() {
                 <input
                   className="create-input"
                   type="number"
-                  min={p.validaciones.valor_minimo || 0}
-                  max={p.validaciones.valor_maximo || 10}
+                  min={p.validaciones?.valor_minimo || 0}
+                  max={p.validaciones?.valor_maximo || 10}
                   value={respuestas[p.id]?.valor || ""} // ⬅ precarga
                   onChange={(e) => handleChange(p, e.target.value)}
                 />
                 {p.validaciones && (
                   <small style={{ color: "gray", display: "block", marginTop: "4px" }}>
                     Rango permitido: {p.validaciones.valor_minimo ?? 0} - {p.validaciones.valor_maximo ?? 10}
+
+                    {/* Advertencias en tiempo real si está fuera del rango */}
+                    {respuestas[p.id]?.valor !== "" && respuestas[p.id]?.valor !== undefined && (
+                      <>
+                        {parseFloat(respuestas[p.id].valor) < (p.validaciones.valor_minimo ?? 0) && (
+                          <span style={{ color: "#f59e0b", marginLeft: "8px" }}>
+                            ⚠️ El valor debe ser al menos {p.validaciones.valor_minimo ?? 0}
+                          </span>
+                        )}
+                        {parseFloat(respuestas[p.id].valor) > (p.validaciones.valor_maximo ?? 10) && (
+                          <span style={{ color: "#f59e0b", marginLeft: "8px" }}>
+                            ⚠️ El valor no puede superar {p.validaciones.valor_maximo ?? 10}
+                          </span>
+                        )}
+                      </>
+                    )}
                   </small>
                 )}
               </div>
