@@ -483,6 +483,17 @@ function AnswerForm() {
                     <label className="create-label">{o.texto}</label>
                   </div>
                 ))}
+
+                {/* ✅ Advertencia si es obligatoria y no está respondida */}
+                {p.obligatorio && !respuestas[p.id]?.valor && (
+                  <small style={{
+                    color: "#f59e0b",
+                    display: "block",
+                    marginTop: "8px"
+                  }}>
+                    ⚠️ Esta pregunta es obligatoria, por favor selecciona una opción
+                  </small>
+                )}
               </div>
             )}
 
@@ -507,6 +518,17 @@ function AnswerForm() {
                     <label className="create-label">{o.texto}</label>
                   </div>
                 ))}
+
+                {/* ✅ Advertencia si es obligatoria y no hay selección */}
+                {p.obligatorio && (!respuestas[p.id]?.valor || respuestas[p.id].valor.length === 0) && (
+                  <small style={{
+                    color: "#f59e0b",
+                    display: "block",
+                    marginTop: "8px"
+                  }}>
+                    ⚠️ Esta pregunta es obligatoria, por favor selecciona al menos una opción
+                  </small>
+                )}
               </div>
             )}
 
@@ -540,6 +562,17 @@ function AnswerForm() {
                         )}
                       </>
                     )}
+                  </small>
+                )}
+
+                {/* ✅ NUEVA: Advertencia si es obligatoria y está vacía */}
+                {p.obligatorio && (respuestas[p.id]?.valor === "" || respuestas[p.id]?.valor === undefined) && (
+                  <small style={{
+                    color: "#f59e0b",
+                    display: "block",
+                    marginTop: "8px"
+                  }}>
+                    ⚠️ Esta pregunta es obligatoria, por favor ingresa un valor
                   </small>
                 )}
               </div>
