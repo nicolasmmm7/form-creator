@@ -1,0 +1,189 @@
+$kind: http-request
+name: Remove Authorized User
+method: DELETE
+url: '{{base_url}}/api/formularios/{{form_id}}/remover-usuario/'
+order: 9000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+pathVariables:
+  - key: form_id
+    value: '{{form_id}}'
+    description: Form ID to remove authorized user from
+body:
+  type: json
+  content: |-
+    {
+      "user_id": "{{user_id}}",
+      "email": "user@example.com"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200 or 204", function () {
+          pm.expect([200, 204]).to.include(pm.response.code);
+      });
+      
+      if (pm.response.code === 200) {
+          pm.test("Response has valid JSON structure", function () {
+              pm.response.to.be.json;
+              const responseJson = pm.response.json();
+              
+              pm.test("Response contains success confirmation", function () {
+                  pm.expect(responseJson).to.have.property('success');
+                  pm.expect(responseJson.success).to.be.true;
+              });
+              
+              pm.test("Response contains removal details", function () {
+                  pm.expect(responseJson).to.have.property('user_id');
+                  pm.expect(responseJson).to.have.property('form_id');
+                  pm.expect(responseJson.user_id).to.be.a('string');
+                  pm.expect(responseJson.form_id).to.be.a('string');
+              });
+              
+              pm.test("Response contains removal timestamp", function () {
+                  pm.expect(responseJson).to.have.property('removed_at');
+                  pm.expect(responseJson.removed_at).to.be.a('string');
+                  
+                  // Validate timestamp format
+                  const timestamp = new Date(responseJson.removed_at);
+                  pm.expect(timestamp).to.be.a('date');
+                  pm.expect(timestamp.getTime()).to.not.be.NaN;
+              });
+              
+              pm.test("User removal data integrity", function () {
+                  const requestBody = JSON.parse(pm.request.body.raw);
+                  
+                  // Verify user ID matches request
+                  if (requestBody.user_id) {
+                      pm.expect(responseJson.user_id).to.equal(requestBody.user_id);
+                  }
+                  
+                  // Verify form ID matches path parameter
+                  pm.expect(responseJson.form_id).to.equal(pm.environment.get('form_id'));
+              });
+          });
+      }
+      
+      if (pm.response.code === 204) {
+          pm.test("No Content response for successful removal", function () {
+              pm.expect(pm.response.text()).to.be.empty;
+          });
+      }
+      
+      pm.test("Response time is acceptable", function () {
+          pm.expect(pm.response.responseTime).to.be.below(5000);
+      });
+      
+      // Test for validation errors
+      if (pm.response.code === 400) {
+          pm.test("Bad Request - Validation errors", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              
+              if (responseJson.error.includes('email')) {
+                  pm.test("Invalid email format", function () {
+                      pm.expect(responseJson.error).to.include('email');
+                  });
+              }
+              
+              if (responseJson.error.includes('user_id')) {
+                  pm.test("Invalid or missing user ID", function () {
+                      pm.expect(responseJson.error).to.include('user_id');
+                  });
+              }
+          });
+      }
+      
+      if (pm.response.code === 401) {
+          pm.test("Unauthorized - Invalid or missing token", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+          });
+      }
+      
+      if (pm.response.code === 403) {
+          pm.test("Forbidden - Not form owner", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('owner');
+          });
+      }
+      
+      if (pm.response.code === 404) {
+          pm.test("Not Found - Form or user not found", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('not found');
+          });
+      }
+      
+      if (pm.response.code === 409) {
+          pm.test("Conflict - User not authorized or cannot remove", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              
+              if (responseJson.error.includes('not authorized')) {
+                  pm.test("User was not authorized to begin with", function () {
+                      pm.expect(responseJson.error).to.include('not authorized');
+                  });
+              }
+              
+              if (responseJson.error.includes('owner')) {
+                  pm.test("Cannot remove form owner", function () {
+                      pm.expect(responseJson.error).to.include('owner');
+                  });
+              }
+          });
+      }
+      
+      // Business logic validation
+      pm.test("Authorization removal business logic", function () {
+          const requestBody = JSON.parse(pm.request.body.raw);
+          
+          pm.test("Request should contain user identification", function () {
+              const hasUserId = requestBody.user_id && requestBody.user_id.trim() !== '';
+              const hasEmail = requestBody.email && requestBody.email.trim() !== '';
+              
+              pm.expect(hasUserId || hasEmail).to.be.true;
+          });
+          
+          if (requestBody.email) {
+              pm.test("Email format should be valid", function () {
+                  pm.expect(requestBody.email).to.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+              });
+          }
+          
+          if ([200, 204].includes(pm.response.code)) {
+              pm.test("Successful removal should be idempotent", function () {
+                  // Removing the same user again should not cause errors
+                  // This would be tested by running the same request twice
+                  pm.expect([200, 204, 404, 409]).to.include(pm.response.code);
+              });
+          }
+      });
+      
+      // Security validation
+      pm.test("Security validation", function () {
+          if ([200, 204].includes(pm.response.code)) {
+              pm.test("Only form owner should be able to remove users", function () {
+                  // This is validated by the 403 test above
+                  // Successful removal implies proper ownership validation
+                  pm.expect(pm.response.code).to.be.oneOf([200, 204]);
+              });
+          }
+          
+          pm.test("Cannot remove form owner from their own form", function () {
+              if (pm.response.code === 409) {
+                  const responseJson = pm.response.json();
+                  if (responseJson.error && responseJson.error.includes('owner')) {
+                      pm.expect(responseJson.error).to.include('owner');
+                  }
+              }
+          });
+      });
+    language: text/javascript

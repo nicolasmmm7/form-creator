@@ -1,0 +1,94 @@
+$kind: http-request
+name: Check Form Access
+method: GET
+url: '{{base_url}}/api/formularios/{{form_id}}/verificar-acceso/'
+order: 6000
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+pathVariables:
+  - key: form_id
+    value: '{{form_id}}'
+    description: Form ID to check access for
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200 or 403", function () {
+          pm.expect([200, 403]).to.include(pm.response.code);
+      });
+      
+      pm.test("Response has valid JSON structure", function () {
+          pm.response.to.be.json;
+          const responseJson = pm.response.json();
+          
+          if (pm.response.code === 200) {
+              pm.test("Access granted - Response contains access details", function () {
+                  pm.expect(responseJson).to.have.property('has_access');
+                  pm.expect(responseJson.has_access).to.be.true;
+                  
+                  pm.expect(responseJson).to.have.property('access_type');
+                  pm.expect(responseJson.access_type).to.be.a('string');
+                  
+                  const validAccessTypes = ['owner', 'authorized', 'public'];
+                  pm.expect(validAccessTypes).to.include(responseJson.access_type);
+              });
+              
+              pm.test("Response contains form metadata", function () {
+                  pm.expect(responseJson).to.have.property('form_id');
+                  pm.expect(responseJson.form_id).to.equal(pm.environment.get('form_id'));
+              });
+          }
+          
+          if (pm.response.code === 403) {
+              pm.test("Access denied - Response contains denial reason", function () {
+                  pm.expect(responseJson).to.have.property('has_access');
+                  pm.expect(responseJson.has_access).to.be.false;
+                  
+                  pm.expect(responseJson).to.have.property('reason');
+                  pm.expect(responseJson.reason).to.be.a('string');
+                  
+                  const validReasons = ['private_form', 'not_authorized', 'login_required'];
+                  pm.expect(validReasons).to.include(responseJson.reason);
+              });
+          }
+      });
+      
+      pm.test("Response time is acceptable", function () {
+          pm.expect(pm.response.responseTime).to.be.below(3000);
+      });
+      
+      // Test for authentication errors
+      if (pm.response.code === 401) {
+          pm.test("Unauthorized - Invalid or missing token", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+          });
+      }
+      
+      if (pm.response.code === 404) {
+          pm.test("Not Found - Form does not exist", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('not found');
+          });
+      }
+      
+      // Business logic validation
+      pm.test("Access control logic validation", function () {
+          const responseJson = pm.response.json();
+          
+          if (responseJson.access_type === 'public') {
+              pm.test("Public form should allow access", function () {
+                  pm.expect(responseJson.has_access).to.be.true;
+              });
+          }
+          
+          if (responseJson.reason === 'private_form') {
+              pm.test("Private form should deny unauthorized access", function () {
+                  pm.expect(responseJson.has_access).to.be.false;
+              });
+          }
+      });
+    language: text/javascript

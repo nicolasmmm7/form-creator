@@ -1,0 +1,14 @@
+$kind: http-request
+name: List Authorized Users
+method: GET
+url: '{{base_url}}/api/formularios/{{form_id}}/usuarios-autorizados/'
+order: 7000
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+pathVariables:
+  - key: form_id
+    value: '{{form_id}}'
+    description: Form ID to list authorized users for

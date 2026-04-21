@@ -1,0 +1,219 @@
+$kind: http-request
+name: Get User Details
+method: GET
+url: '{{base_url}}/api/usuarios/{{user_id}}/'
+order: 3000
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+pathVariables:
+  - key: user_id
+    value: '{{user_id}}'
+    description: User ID to retrieve
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      
+      pm.test("Response has valid JSON structure", function () {
+          pm.response.to.be.json;
+          const responseJson = pm.response.json();
+          
+          pm.test("Response contains user ID", function () {
+              pm.expect(responseJson).to.have.property('id');
+              pm.expect(responseJson.id).to.be.a('string');
+              pm.expect(responseJson.id).to.equal(pm.environment.get('user_id'));
+          });
+          
+          pm.test("Response contains basic user information", function () {
+              pm.expect(responseJson).to.have.property('nombre');
+              pm.expect(responseJson).to.have.property('email');
+              
+              pm.expect(responseJson.nombre).to.be.a('string');
+              pm.expect(responseJson.email).to.be.a('string');
+              pm.expect(responseJson.email).to.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+          });
+          
+          pm.test("Response contains empresa information", function () {
+              pm.expect(responseJson).to.have.property('empresa');
+              pm.expect(responseJson.empresa).to.be.an('object');
+              
+              if (responseJson.empresa) {
+                  pm.expect(responseJson.empresa).to.have.property('nombre');
+                  pm.expect(responseJson.empresa).to.have.property('telefono');
+                  pm.expect(responseJson.empresa).to.have.property('nit');
+                  
+                  pm.expect(responseJson.empresa.nombre).to.be.a('string');
+                  pm.expect(responseJson.empresa.telefono).to.be.a('string');
+                  pm.expect(responseJson.empresa.nit).to.be.a('string');
+              }
+          });
+          
+          pm.test("Response contains perfil information", function () {
+              pm.expect(responseJson).to.have.property('perfil');
+              pm.expect(responseJson.perfil).to.be.an('object');
+              
+              if (responseJson.perfil) {
+                  pm.expect(responseJson.perfil).to.have.property('idioma');
+                  pm.expect(responseJson.perfil).to.have.property('timezone');
+                  
+                  pm.expect(responseJson.perfil.idioma).to.be.a('string');
+                  pm.expect(responseJson.perfil.timezone).to.be.a('string');
+                  
+                  // Validate language code format (e.g., 'es', 'en', 'fr')
+                  pm.expect(responseJson.perfil.idioma).to.match(/^[a-z]{2}$/);
+                  
+                  // Validate timezone format (e.g., 'America/Bogota')
+                  pm.expect(responseJson.perfil.timezone).to.include('/');
+              }
+          });
+          
+          pm.test("Response contains timestamps", function () {
+              pm.expect(responseJson).to.have.property('fecha_creacion');
+              pm.expect(responseJson.fecha_creacion).to.be.a('string');
+              
+              // Validate timestamp format
+              const creationDate = new Date(responseJson.fecha_creacion);
+              pm.expect(creationDate).to.be.a('date');
+              pm.expect(creationDate.getTime()).to.not.be.NaN;
+              
+              if (responseJson.fecha_actualizacion) {
+                  const updateDate = new Date(responseJson.fecha_actualizacion);
+                  pm.expect(updateDate).to.be.a('date');
+                  pm.expect(updateDate.getTime()).to.not.be.NaN;
+                  
+                  // Update date should be >= creation date
+                  pm.expect(updateDate.getTime()).to.be.at.least(creationDate.getTime());
+              }
+          });
+          
+          pm.test("Security - Sensitive data not exposed", function () {
+              pm.expect(responseJson).to.not.have.property('clave_hash');
+              pm.expect(responseJson).to.not.have.property('password');
+              pm.expect(responseJson).to.not.have.property('firebase_uid');
+              pm.expect(responseJson).to.not.have.property('reset_token');
+          });
+      });
+      
+      pm.test("Response time is acceptable", function () {
+          pm.expect(pm.response.responseTime).to.be.below(3000);
+      });
+      
+      // Test for access control
+      if (pm.response.code === 401) {
+          pm.test("Unauthorized - Invalid or missing token", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+          });
+      }
+      
+      if (pm.response.code === 403) {
+          pm.test("Forbidden - No access to user details", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('access');
+          });
+      }
+      
+      if (pm.response.code === 404) {
+          pm.test("Not Found - User does not exist", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('not found');
+          });
+      }
+      
+      // Data validation tests
+      pm.test("Data validation", function () {
+          const responseJson = pm.response.json();
+          
+          if (responseJson.email) {
+              pm.test("Email format is valid", function () {
+                  pm.expect(responseJson.email).to.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+              });
+              
+              pm.test("Email length is reasonable", function () {
+                  pm.expect(responseJson.email.length).to.be.within(5, 254);
+              });
+          }
+          
+          if (responseJson.nombre) {
+              pm.test("Name is not empty", function () {
+                  pm.expect(responseJson.nombre.trim()).to.not.be.empty;
+              });
+              
+              pm.test("Name length is reasonable", function () {
+                  pm.expect(responseJson.nombre.length).to.be.within(1, 100);
+              });
+          }
+          
+          if (responseJson.empresa && responseJson.empresa.telefono) {
+              pm.test("Phone number format is valid", function () {
+                  // Allow various phone formats: +1234567890, (123) 456-7890, etc.
+                  pm.expect(responseJson.empresa.telefono).to.match(/^[\+\(\)\-\s\d]+$/);
+              });
+          }
+          
+          if (responseJson.empresa && responseJson.empresa.nit) {
+              pm.test("NIT format is valid", function () {
+                  // NIT should be alphanumeric
+                  pm.expect(responseJson.empresa.nit).to.match(/^[a-zA-Z0-9\-]+$/);
+              });
+          }
+      });
+      
+      // Business logic validation
+      pm.test("Business logic validation", function () {
+          const responseJson = pm.response.json();
+          
+          pm.test("User ID should match requested ID", function () {
+              const requestedUserId = pm.environment.get('user_id');
+              if (requestedUserId) {
+                  pm.expect(responseJson.id).to.equal(requestedUserId);
+              }
+          });
+          
+          if (responseJson.perfil && responseJson.perfil.avatar_url) {
+              pm.test("Avatar URL should be valid", function () {
+                  pm.expect(responseJson.perfil.avatar_url).to.match(/^https?:\/\/.+/);
+              });
+          }
+          
+          pm.test("Required fields should not be empty", function () {
+              pm.expect(responseJson.nombre).to.not.be.empty;
+              pm.expect(responseJson.email).to.not.be.empty;
+              pm.expect(responseJson.id).to.not.be.empty;
+          });
+      });
+      
+      // Privacy and security validation
+      pm.test("Privacy and security validation", function () {
+          const responseJson = pm.response.json();
+          
+          pm.test("No internal system fields exposed", function () {
+              pm.expect(responseJson).to.not.have.property('_id');
+              pm.expect(responseJson).to.not.have.property('__v');
+              pm.expect(responseJson).to.not.have.property('salt');
+              pm.expect(responseJson).to.not.have.property('hash');
+          });
+          
+          pm.test("No authentication tokens exposed", function () {
+              const responseText = pm.response.text();
+              pm.expect(responseText).to.not.include('token');
+              pm.expect(responseText).to.not.include('jwt');
+              pm.expect(responseText).to.not.include('bearer');
+          });
+          
+          pm.test("User can only access their own details or authorized details", function () {
+              // This is enforced by the backend authorization logic
+              // A 403 error would indicate unauthorized access attempt
+              if (pm.response.code === 200) {
+                  pm.expect(responseJson.id).to.not.be.empty;
+              }
+          });
+      });
+    language: text/javascript

@@ -1,0 +1,197 @@
+$kind: http-request
+name: Export Form Data
+method: GET
+url: '{{base_url}}/api/formularios/{{form_id}}/exportar/'
+order: 12000
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+pathVariables:
+  - key: form_id
+    value: '{{form_id}}'
+    description: Form ID to export data for
+queryParams:
+  - key: format
+    value: json
+    description: Export format (json, csv, xlsx)
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      
+      const format = pm.request.url.query.get('format') || 'json';
+      
+      if (format === 'json') {
+          pm.test("JSON export has valid structure", function () {
+              pm.response.to.be.json;
+              const responseJson = pm.response.json();
+              
+              pm.test("Export contains form metadata", function () {
+                  pm.expect(responseJson).to.have.property('form_id');
+                  pm.expect(responseJson).to.have.property('form_title');
+                  pm.expect(responseJson).to.have.property('export_date');
+                  
+                  pm.expect(responseJson.form_id).to.equal(pm.environment.get('form_id'));
+                  pm.expect(responseJson.form_title).to.be.a('string');
+                  pm.expect(responseJson.export_date).to.be.a('string');
+                  
+                  // Validate export date format
+                  const exportDate = new Date(responseJson.export_date);
+                  pm.expect(exportDate).to.be.a('date');
+                  pm.expect(exportDate.getTime()).to.not.be.NaN;
+              });
+              
+              pm.test("Export contains responses data", function () {
+                  pm.expect(responseJson).to.have.property('responses');
+                  pm.expect(responseJson.responses).to.be.an('array');
+                  
+                  if (responseJson.responses.length > 0) {
+                      responseJson.responses.forEach((response, index) => {
+                          pm.expect(response).to.have.property('response_id');
+                          pm.expect(response).to.have.property('user_id');
+                          pm.expect(response).to.have.property('submission_date');
+                          pm.expect(response).to.have.property('answers');
+                          
+                          pm.expect(response.response_id).to.be.a('string');
+                          pm.expect(response.user_id).to.be.a('string');
+                          pm.expect(response.answers).to.be.an('array');
+                          
+                          // Validate submission date
+                          const submissionDate = new Date(response.submission_date);
+                          pm.expect(submissionDate).to.be.a('date');
+                          pm.expect(submissionDate.getTime()).to.not.be.NaN;
+                      });
+                  }
+              });
+              
+              pm.test("Export contains form questions", function () {
+                  pm.expect(responseJson).to.have.property('questions');
+                  pm.expect(responseJson.questions).to.be.an('array');
+                  
+                  if (responseJson.questions.length > 0) {
+                      responseJson.questions.forEach((question, index) => {
+                          pm.expect(question).to.have.property('id');
+                          pm.expect(question).to.have.property('type');
+                          pm.expect(question).to.have.property('text');
+                          
+                          pm.expect(question.id).to.be.a('string');
+                          pm.expect(question.type).to.be.a('string');
+                          pm.expect(question.text).to.be.a('string');
+                          
+                          // Validate question type
+                          const validTypes = ['texto_libre', 'opcion_multiple', 'escala_numerica', 'checkbox', 'fecha', 'email'];
+                          pm.expect(validTypes).to.include(question.type);
+                      });
+                  }
+              });
+              
+              pm.test("Export data integrity validation", function () {
+                  if (responseJson.responses.length > 0 && responseJson.questions.length > 0) {
+                      const questionIds = responseJson.questions.map(q => q.id);
+                      
+                      responseJson.responses.forEach((response) => {
+                          response.answers.forEach((answer) => {
+                              pm.expect(answer).to.have.property('question_id');
+                              pm.expect(answer).to.have.property('value');
+                              
+                              // Verify answer references valid question
+                              pm.expect(questionIds).to.include(answer.question_id);
+                          });
+                      });
+                  }
+              });
+          });
+      }
+      
+      if (format === 'csv') {
+          pm.test("CSV export has valid format", function () {
+              const responseText = pm.response.text();
+              
+              pm.test("CSV contains header row", function () {
+                  const lines = responseText.split('\n');
+                  pm.expect(lines.length).to.be.greaterThan(0);
+                  
+                  const header = lines[0];
+                  pm.expect(header).to.include('response_id');
+                  pm.expect(header).to.include('user_id');
+                  pm.expect(header).to.include('submission_date');
+              });
+              
+              pm.test("CSV has proper content type", function () {
+                  const contentType = pm.response.headers.get('Content-Type');
+                  pm.expect(contentType).to.include('text/csv');
+              });
+          });
+      }
+      
+      if (format === 'xlsx') {
+          pm.test("Excel export has valid format", function () {
+              pm.test("Excel has proper content type", function () {
+                  const contentType = pm.response.headers.get('Content-Type');
+                  pm.expect(contentType).to.include('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+              });
+              
+              pm.test("Excel file has content", function () {
+                  pm.expect(pm.response.responseSize).to.be.greaterThan(0);
+              });
+          });
+      }
+      
+      pm.test("Response time is acceptable", function () {
+          pm.expect(pm.response.responseTime).to.be.below(10000); // Export might take longer
+      });
+      
+      // Test for access control
+      if (pm.response.code === 401) {
+          pm.test("Unauthorized - Invalid or missing token", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+          });
+      }
+      
+      if (pm.response.code === 403) {
+          pm.test("Forbidden - No export access", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('access');
+          });
+      }
+      
+      if (pm.response.code === 404) {
+          pm.test("Not Found - Form does not exist", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('not found');
+          });
+      }
+      
+      if (pm.response.code === 400) {
+          pm.test("Bad Request - Invalid export format", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('format');
+          });
+      }
+      
+      // Business logic validation
+      pm.test("Export functionality validation", function () {
+          const format = pm.request.url.query.get('format');
+          const validFormats = ['json', 'csv', 'xlsx'];
+          
+          if (format) {
+              pm.test("Export format is valid", function () {
+                  pm.expect(validFormats).to.include(format);
+              });
+          }
+          
+          if (pm.response.code === 200) {
+              pm.test("Successful export should have content", function () {
+                  pm.expect(pm.response.responseSize).to.be.greaterThan(0);
+              });
+          }
+      });
+    language: text/javascript

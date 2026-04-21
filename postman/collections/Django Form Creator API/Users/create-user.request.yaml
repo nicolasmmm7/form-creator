@@ -1,0 +1,104 @@
+$kind: http-request
+name: Create User
+method: POST
+url: '{{base_url}}/api/usuarios/'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "John Doe",
+      "email": "john.doe@example.com",
+      "clave_hash": "hashed_password_here",
+      "empresa": {
+        "nombre": "Example Corp",
+        "telefono": "+1234567890",
+        "nit": "123456789"
+      },
+      "perfil": {
+        "avatar_url": "https://example.com/avatar.jpg",
+        "idioma": "es",
+        "timezone": "America/Bogota"
+      }
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 201", function () {
+          pm.response.to.have.status(201);
+      });
+      
+      pm.test("Response has valid JSON structure", function () {
+          pm.response.to.be.json;
+          const responseJson = pm.response.json();
+          
+          pm.test("Response contains user ID", function () {
+              pm.expect(responseJson).to.have.property('id');
+              pm.expect(responseJson.id).to.be.a('string');
+              pm.expect(responseJson.id).to.not.be.empty;
+          });
+          
+          pm.test("Response contains user details", function () {
+              pm.expect(responseJson).to.have.property('nombre');
+              pm.expect(responseJson).to.have.property('email');
+              pm.expect(responseJson.email).to.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+          });
+          
+          pm.test("Response contains empresa details", function () {
+              pm.expect(responseJson).to.have.property('empresa');
+              pm.expect(responseJson.empresa).to.have.property('nombre');
+              pm.expect(responseJson.empresa).to.have.property('telefono');
+              pm.expect(responseJson.empresa).to.have.property('nit');
+          });
+          
+          pm.test("Response contains perfil details", function () {
+              pm.expect(responseJson).to.have.property('perfil');
+              pm.expect(responseJson.perfil).to.have.property('idioma');
+              pm.expect(responseJson.perfil).to.have.property('timezone');
+          });
+          
+          pm.test("Password hash is not exposed", function () {
+              pm.expect(responseJson).to.not.have.property('clave_hash');
+              pm.expect(responseJson).to.not.have.property('password');
+          });
+          
+          // Store user ID for subsequent requests
+          if (responseJson.id) {
+              pm.environment.set("user_id", responseJson.id);
+          }
+      });
+      
+      pm.test("Response time is acceptable", function () {
+          pm.expect(pm.response.responseTime).to.be.below(5000);
+      });
+      
+      // Test for validation errors
+      if (pm.response.code === 400) {
+          pm.test("Bad Request - Validation errors", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+          });
+      }
+      
+      if (pm.response.code === 409) {
+          pm.test("Conflict - Email already exists", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('email');
+          });
+      }
+      
+      if (pm.response.code === 401) {
+          pm.test("Unauthorized - Invalid or missing token", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+          });
+      }
+    language: text/javascript

@@ -1,0 +1,152 @@
+$kind: http-request
+name: Get Form Statistics
+method: GET
+url: '{{base_url}}/api/formularios/{{form_id}}/estadisticas/'
+order: 11000
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+pathVariables:
+  - key: form_id
+    value: '{{form_id}}'
+    description: Form ID to get statistics for
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      
+      pm.test("Response has valid JSON structure", function () {
+          pm.response.to.be.json;
+          const responseJson = pm.response.json();
+          
+          pm.test("Response contains form ID", function () {
+              pm.expect(responseJson).to.have.property('form_id');
+              pm.expect(responseJson.form_id).to.equal(pm.environment.get('form_id'));
+          });
+          
+          pm.test("Response contains total responses count", function () {
+              pm.expect(responseJson).to.have.property('total_responses');
+              pm.expect(responseJson.total_responses).to.be.a('number');
+              pm.expect(responseJson.total_responses).to.be.at.least(0);
+          });
+          
+          pm.test("Response contains completion rate", function () {
+              pm.expect(responseJson).to.have.property('completion_rate');
+              pm.expect(responseJson.completion_rate).to.be.a('number');
+              pm.expect(responseJson.completion_rate).to.be.within(0, 100);
+          });
+          
+          pm.test("Response contains question statistics", function () {
+              pm.expect(responseJson).to.have.property('question_stats');
+              pm.expect(responseJson.question_stats).to.be.an('array');
+              
+              if (responseJson.question_stats.length > 0) {
+                  responseJson.question_stats.forEach((stat, index) => {
+                      pm.expect(stat).to.have.property('question_id');
+                      pm.expect(stat).to.have.property('response_count');
+                      pm.expect(stat).to.have.property('question_type');
+                      
+                      pm.expect(stat.question_id).to.be.a('string');
+                      pm.expect(stat.response_count).to.be.a('number');
+                      pm.expect(stat.response_count).to.be.at.least(0);
+                      
+                      // Validate question type
+                      const validTypes = ['texto_libre', 'opcion_multiple', 'escala_numerica', 'checkbox', 'fecha', 'email'];
+                      pm.expect(validTypes).to.include(stat.question_type);
+                  });
+              }
+          });
+          
+          pm.test("Response contains time-based statistics", function () {
+              pm.expect(responseJson).to.have.property('time_stats');
+              pm.expect(responseJson.time_stats).to.be.an('object');
+              
+              if (responseJson.time_stats) {
+                  pm.expect(responseJson.time_stats).to.have.property('first_response');
+                  pm.expect(responseJson.time_stats).to.have.property('last_response');
+                  
+                  if (responseJson.time_stats.first_response) {
+                      const firstResponse = new Date(responseJson.time_stats.first_response);
+                      pm.expect(firstResponse).to.be.a('date');
+                      pm.expect(firstResponse.getTime()).to.not.be.NaN;
+                  }
+                  
+                  if (responseJson.time_stats.last_response) {
+                      const lastResponse = new Date(responseJson.time_stats.last_response);
+                      pm.expect(lastResponse).to.be.a('date');
+                      pm.expect(lastResponse.getTime()).to.not.be.NaN;
+                  }
+              }
+          });
+          
+          pm.test("Statistics calculation accuracy", function () {
+              if (responseJson.total_responses > 0 && responseJson.question_stats.length > 0) {
+                  // Verify that question response counts don't exceed total responses
+                  responseJson.question_stats.forEach((stat) => {
+                      pm.expect(stat.response_count).to.be.at.most(responseJson.total_responses);
+                  });
+              }
+              
+              // Completion rate should be reasonable
+              if (responseJson.total_responses > 0) {
+                  pm.expect(responseJson.completion_rate).to.be.greaterThan(0);
+              }
+          });
+      });
+      
+      pm.test("Response time is acceptable", function () {
+          pm.expect(pm.response.responseTime).to.be.below(5000);
+      });
+      
+      // Test for access control
+      if (pm.response.code === 401) {
+          pm.test("Unauthorized - Invalid or missing token", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+          });
+      }
+      
+      if (pm.response.code === 403) {
+          pm.test("Forbidden - No access to form statistics", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('access');
+          });
+      }
+      
+      if (pm.response.code === 404) {
+          pm.test("Not Found - Form does not exist", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('not found');
+          });
+      }
+      
+      // Business logic validation
+      pm.test("Statistics business logic validation", function () {
+          const responseJson = pm.response.json();
+          
+          if (responseJson.total_responses === 0) {
+              pm.test("No responses should result in zero completion rate", function () {
+                  pm.expect(responseJson.completion_rate).to.equal(0);
+              });
+          }
+          
+          if (responseJson.question_stats && responseJson.question_stats.length > 0) {
+              pm.test("Question statistics should be consistent", function () {
+                  const totalQuestionResponses = responseJson.question_stats.reduce((sum, stat) => {
+                      return sum + stat.response_count;
+                  }, 0);
+                  
+                  // Total question responses should be reasonable compared to form responses
+                  if (responseJson.total_responses > 0) {
+                      pm.expect(totalQuestionResponses).to.be.greaterThan(0);
+                  }
+              });
+          }
+      });
+    language: text/javascript

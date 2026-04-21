@@ -1,0 +1,154 @@
+$kind: http-request
+name: Create Form
+method: POST
+url: '{{base_url}}/api/formularios/'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+body:
+  type: json
+  content: |-
+    {
+      "titulo": "Customer Feedback Form",
+      "descripcion": "A form to collect customer feedback and suggestions",
+      "preguntas": [
+        {
+          "id": "q1",
+          "tipo": "texto_libre",
+          "enunciado": "What is your name?",
+          "obligatorio": true,
+          "validaciones": {
+            "longitud_minima": 2,
+            "longitud_maxima": 50
+          },
+          "posicion": 1
+        },
+        {
+          "id": "q2",
+          "tipo": "opcion_multiple",
+          "enunciado": "How satisfied are you with our service?",
+          "obligatorio": true,
+          "opciones": ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"],
+          "posicion": 2
+        },
+        {
+          "id": "q3",
+          "tipo": "escala_numerica",
+          "enunciado": "Rate our service from 1 to 10",
+          "obligatorio": false,
+          "validaciones": {
+            "valor_minimo": 1,
+            "valor_maximo": 10
+          },
+          "posicion": 3
+        },
+        {
+          "id": "q4",
+          "tipo": "checkbox",
+          "enunciado": "Which features do you use most?",
+          "obligatorio": false,
+          "opciones": ["Feature A", "Feature B", "Feature C", "Feature D"],
+          "posicion": 4
+        }
+      ],
+      "configuracion": {
+        "es_publico": true,
+        "usuarios_autorizados": [],
+        "requerir_login": false
+      }
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 201", function () {
+          pm.response.to.have.status(201);
+      });
+      
+      pm.test("Response has valid JSON structure", function () {
+          pm.response.to.be.json;
+          const responseJson = pm.response.json();
+          
+          pm.test("Response contains form ID", function () {
+              pm.expect(responseJson).to.have.property('id');
+              pm.expect(responseJson.id).to.be.a('string');
+              pm.expect(responseJson.id).to.not.be.empty;
+          });
+          
+          pm.test("Response contains form details", function () {
+              pm.expect(responseJson).to.have.property('titulo');
+              pm.expect(responseJson).to.have.property('descripcion');
+              pm.expect(responseJson.titulo).to.be.a('string');
+              pm.expect(responseJson.descripcion).to.be.a('string');
+          });
+          
+          pm.test("Response contains preguntas array", function () {
+              pm.expect(responseJson).to.have.property('preguntas');
+              pm.expect(responseJson.preguntas).to.be.an('array');
+              pm.expect(responseJson.preguntas.length).to.be.greaterThan(0);
+          });
+          
+          pm.test("Preguntas have valid structure", function () {
+              responseJson.preguntas.forEach((pregunta, index) => {
+                  pm.expect(pregunta).to.have.property('id');
+                  pm.expect(pregunta).to.have.property('tipo');
+                  pm.expect(pregunta).to.have.property('enunciado');
+                  pm.expect(pregunta).to.have.property('obligatorio');
+                  pm.expect(pregunta).to.have.property('posicion');
+                  
+                  // Validate question types
+                  const validTypes = ['texto_libre', 'opcion_multiple', 'escala_numerica', 'checkbox', 'fecha', 'email'];
+                  pm.expect(validTypes).to.include(pregunta.tipo);
+                  
+                  // Validate position is a number
+                  pm.expect(pregunta.posicion).to.be.a('number');
+              });
+          });
+          
+          pm.test("Response contains configuracion", function () {
+              pm.expect(responseJson).to.have.property('configuracion');
+              pm.expect(responseJson.configuracion).to.have.property('es_publico');
+              pm.expect(responseJson.configuracion.es_publico).to.be.a('boolean');
+          });
+          
+          pm.test("Form has creation timestamp", function () {
+              pm.expect(responseJson).to.have.property('fecha_creacion');
+              pm.expect(responseJson.fecha_creacion).to.be.a('string');
+          });
+          
+          // Store form ID for subsequent requests
+          if (responseJson.id) {
+              pm.environment.set("form_id", responseJson.id);
+          }
+      });
+      
+      pm.test("Response time is acceptable", function () {
+          pm.expect(pm.response.responseTime).to.be.below(5000);
+      });
+      
+      // Test for validation errors
+      if (pm.response.code === 400) {
+          pm.test("Bad Request - Validation errors", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+          });
+      }
+      
+      if (pm.response.code === 401) {
+          pm.test("Unauthorized - Invalid or missing token", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+          });
+      }
+      
+      if (pm.response.code === 403) {
+          pm.test("Forbidden - Insufficient permissions", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+          });
+      }
+    language: text/javascript

@@ -1,0 +1,14 @@
+$kind: http-request
+name: Delete User
+method: DELETE
+url: '{{base_url}}/api/usuarios/{{user_id}}/'
+order: 5000
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+pathVariables:
+  - key: user_id
+    value: '{{user_id}}'
+    description: User ID to delete

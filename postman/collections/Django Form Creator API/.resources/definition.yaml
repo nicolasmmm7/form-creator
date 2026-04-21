@@ -1,0 +1,24 @@
+$kind: collection
+name: Django Form Creator API
+description: Comprehensive API collection for the Django form creator application with MongoDB and Firebase authentication
+variables:
+  - key: base_url
+    value: 'http://localhost:8000'
+    description: Base URL for the Django API server
+  - key: firebase_token
+    value: ''
+    description: Firebase authentication token
+  - key: user_id
+    value: ''
+    description: Current user ID for authenticated requests
+  - key: form_id
+    value: ''
+    description: Form ID for form-specific operations
+  - key: response_id
+    value: ''
+    description: Response ID for response operations
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{firebase_token}}'

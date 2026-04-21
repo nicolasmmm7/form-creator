@@ -1,0 +1,109 @@
+$kind: http-request
+name: Protected Test Endpoint
+method: GET
+url: '{{base_url}}/api/usuarios/protected/'
+order: 9000
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      
+      pm.test("Response has valid JSON structure", function () {
+          pm.response.to.be.json;
+          const responseJson = pm.response.json();
+          
+          pm.test("Response contains authentication confirmation", function () {
+              pm.expect(responseJson).to.have.property('authenticated');
+              pm.expect(responseJson.authenticated).to.be.true;
+          });
+          
+          pm.test("Response contains user information", function () {
+              pm.expect(responseJson).to.have.property('user');
+              pm.expect(responseJson.user).to.be.an('object');
+              
+              if (responseJson.user) {
+                  pm.expect(responseJson.user).to.have.property('id');
+                  pm.expect(responseJson.user.id).to.be.a('string');
+                  pm.expect(responseJson.user.id).to.not.be.empty;
+              }
+          });
+          
+          pm.test("Response contains access timestamp", function () {
+              pm.expect(responseJson).to.have.property('access_time');
+              pm.expect(responseJson.access_time).to.be.a('string');
+              
+              // Validate timestamp format
+              const timestamp = new Date(responseJson.access_time);
+              pm.expect(timestamp).to.be.a('date');
+              pm.expect(timestamp.getTime()).to.not.be.NaN;
+          });
+      });
+      
+      pm.test("Response time is acceptable", function () {
+          pm.expect(pm.response.responseTime).to.be.below(3000);
+      });
+      
+      // Test for authentication failure scenarios
+      if (pm.response.code === 401) {
+          pm.test("Unauthorized - Invalid or missing token", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('Unauthorized');
+              
+              pm.test("Authentication failure details", function () {
+                  pm.expect(responseJson).to.have.property('authenticated');
+                  pm.expect(responseJson.authenticated).to.be.false;
+              });
+          });
+      }
+      
+      if (pm.response.code === 403) {
+          pm.test("Forbidden - Token expired or invalid", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('Forbidden');
+          });
+      }
+      
+      // Authentication flow validation
+      pm.test("Authentication flow validation", function () {
+          const token = pm.environment.get('firebase_token');
+          
+          if (token && token.length > 0) {
+              pm.test("Valid token should grant access", function () {
+                  if (pm.response.code === 200) {
+                      const responseJson = pm.response.json();
+                      pm.expect(responseJson.authenticated).to.be.true;
+                  }
+              });
+          } else {
+              pm.test("Missing token should deny access", function () {
+                  pm.expect([401, 403]).to.include(pm.response.code);
+              });
+          }
+      });
+      
+      // Token validation tests
+      pm.test("Token validation", function () {
+          const authHeader = pm.request.headers.get('Authorization');
+          
+          if (authHeader) {
+              pm.test("Authorization header format is correct", function () {
+                  pm.expect(authHeader).to.match(/^Bearer\s+.+/);
+              });
+              
+              const token = authHeader.replace('Bearer ', '');
+              pm.test("Token is not empty", function () {
+                  pm.expect(token).to.not.be.empty;
+                  pm.expect(token.length).to.be.greaterThan(10);
+              });
+          }
+      });
+    language: text/javascript

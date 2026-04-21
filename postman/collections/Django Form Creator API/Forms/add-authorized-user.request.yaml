@@ -1,0 +1,137 @@
+$kind: http-request
+name: Add Authorized User
+method: POST
+url: '{{base_url}}/api/formularios/{{form_id}}/agregar-usuario/'
+order: 8000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+pathVariables:
+  - key: form_id
+    value: '{{form_id}}'
+    description: Form ID to add authorized user to
+body:
+  type: json
+  content: |-
+    {
+      "user_id": "{{user_id}}",
+      "email": "user@example.com"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200 or 201", function () {
+          pm.expect([200, 201]).to.include(pm.response.code);
+      });
+      
+      pm.test("Response has valid JSON structure", function () {
+          pm.response.to.be.json;
+          const responseJson = pm.response.json();
+          
+          pm.test("Response contains success confirmation", function () {
+              pm.expect(responseJson).to.have.property('success');
+              pm.expect(responseJson.success).to.be.true;
+          });
+          
+          pm.test("Response contains user authorization details", function () {
+              pm.expect(responseJson).to.have.property('user_id');
+              pm.expect(responseJson).to.have.property('form_id');
+              pm.expect(responseJson.user_id).to.be.a('string');
+              pm.expect(responseJson.form_id).to.be.a('string');
+          });
+          
+          pm.test("Response contains authorization timestamp", function () {
+              pm.expect(responseJson).to.have.property('authorized_at');
+              pm.expect(responseJson.authorized_at).to.be.a('string');
+              
+              // Validate timestamp format
+              const timestamp = new Date(responseJson.authorized_at);
+              pm.expect(timestamp).to.be.a('date');
+              pm.expect(timestamp.getTime()).to.not.be.NaN;
+          });
+          
+          pm.test("User authorization data integrity", function () {
+              const requestBody = JSON.parse(pm.request.body.raw);
+              
+              // Verify user ID matches request
+              if (requestBody.user_id) {
+                  pm.expect(responseJson.user_id).to.equal(requestBody.user_id);
+              }
+              
+              // Verify form ID matches path parameter
+              pm.expect(responseJson.form_id).to.equal(pm.environment.get('form_id'));
+          });
+      });
+      
+      pm.test("Response time is acceptable", function () {
+          pm.expect(pm.response.responseTime).to.be.below(5000);
+      });
+      
+      // Test for validation errors
+      if (pm.response.code === 400) {
+          pm.test("Bad Request - Validation errors", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              
+              if (responseJson.error.includes('email')) {
+                  pm.test("Invalid email format", function () {
+                      pm.expect(responseJson.error).to.include('email');
+                  });
+              }
+              
+              if (responseJson.error.includes('user_id')) {
+                  pm.test("Invalid or missing user ID", function () {
+                      pm.expect(responseJson.error).to.include('user_id');
+                  });
+              }
+          });
+      }
+      
+      if (pm.response.code === 401) {
+          pm.test("Unauthorized - Invalid or missing token", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+          });
+      }
+      
+      if (pm.response.code === 403) {
+          pm.test("Forbidden - Not form owner", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('owner');
+          });
+      }
+      
+      if (pm.response.code === 404) {
+          pm.test("Not Found - Form or user not found", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('not found');
+          });
+      }
+      
+      if (pm.response.code === 409) {
+          pm.test("Conflict - User already authorized", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('already');
+          });
+      }
+      
+      // Business logic validation
+      pm.test("Authorization business logic validation", function () {
+          const responseJson = pm.response.json();
+          
+          if (responseJson.success) {
+              pm.test("Successful authorization should have valid data", function () {
+                  pm.expect(responseJson.user_id).to.not.be.empty;
+                  pm.expect(responseJson.form_id).to.not.be.empty;
+                  pm.expect(responseJson.authorized_at).to.not.be.empty;
+              });
+          }
+      });
+    language: text/javascript

@@ -1,0 +1,33 @@
+$kind: http-request
+name: Update User
+method: PUT
+url: '{{base_url}}/api/usuarios/{{user_id}}/'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+pathVariables:
+  - key: user_id
+    value: '{{user_id}}'
+    description: User ID to update
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "John Doe Updated",
+      "email": "john.doe.updated@example.com",
+      "empresa": {
+        "nombre": "Updated Corp",
+        "telefono": "+1234567891",
+        "nit": "123456789"
+      },
+      "perfil": {
+        "avatar_url": "https://example.com/new-avatar.jpg",
+        "idioma": "en",
+        "timezone": "America/New_York"
+      }
+    }

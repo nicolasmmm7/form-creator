@@ -1,0 +1,68 @@
+$kind: http-request
+name: Firebase Auth Sync
+method: POST
+url: '{{base_url}}/api/auth/firebase/'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "firebase_token": "{{firebase_token}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      
+      pm.test("Response has valid JSON structure", function () {
+          pm.response.to.be.json;
+          const responseJson = pm.response.json();
+          
+          pm.test("Response contains user_id", function () {
+              pm.expect(responseJson).to.have.property('user_id');
+              pm.expect(responseJson.user_id).to.be.a('string');
+              pm.expect(responseJson.user_id).to.not.be.empty;
+          });
+          
+          pm.test("Response contains token", function () {
+              pm.expect(responseJson).to.have.property('token');
+              pm.expect(responseJson.token).to.be.a('string');
+              pm.expect(responseJson.token).to.not.be.empty;
+          });
+          
+          // Store values for subsequent requests
+          if (responseJson.user_id) {
+              pm.environment.set("user_id", responseJson.user_id);
+          }
+          if (responseJson.token) {
+              pm.environment.set("firebase_token", responseJson.token);
+          }
+      });
+      
+      pm.test("Response time is acceptable", function () {
+          pm.expect(pm.response.responseTime).to.be.below(5000);
+      });
+      
+      // Test for authentication failure scenarios
+      if (pm.response.code === 401) {
+          pm.test("Unauthorized - Invalid Firebase token", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('Invalid');
+          });
+      }
+      
+      if (pm.response.code === 400) {
+          pm.test("Bad Request - Missing or malformed token", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+          });
+      }
+    language: text/javascript

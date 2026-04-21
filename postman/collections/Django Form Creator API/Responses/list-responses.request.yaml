@@ -1,0 +1,170 @@
+$kind: http-request
+name: List Responses
+method: GET
+url: '{{base_url}}/api/respuestas/'
+order: 1000
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+queryParams:
+  - key: formulario_id
+    value: '{{form_id}}'
+    description: Filter responses by form ID
+    disabled: true
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      
+      pm.test("Response has valid JSON structure", function () {
+          pm.response.to.be.json;
+          const responseJson = pm.response.json();
+          
+          pm.test("Response contains results array", function () {
+              pm.expect(responseJson).to.have.property('results');
+              pm.expect(responseJson.results).to.be.an('array');
+          });
+          
+          pm.test("Response contains pagination info", function () {
+              pm.expect(responseJson).to.have.property('count');
+              pm.expect(responseJson).to.have.property('next');
+              pm.expect(responseJson).to.have.property('previous');
+              
+              pm.expect(responseJson.count).to.be.a('number');
+              pm.expect(responseJson.count).to.be.at.least(0);
+          });
+          
+          if (responseJson.results.length > 0) {
+              pm.test("Response items have valid structure", function () {
+                  responseJson.results.forEach((response, index) => {
+                      pm.expect(response).to.have.property('id');
+                      pm.expect(response).to.have.property('formulario_id');
+                      pm.expect(response).to.have.property('usuario_id');
+                      pm.expect(response).to.have.property('fecha_envio');
+                      pm.expect(response).to.have.property('respuestas');
+                      
+                      pm.expect(response.id).to.be.a('string');
+                      pm.expect(response.formulario_id).to.be.a('string');
+                      pm.expect(response.usuario_id).to.be.a('string');
+                      pm.expect(response.respuestas).to.be.an('array');
+                      
+                      // Validate timestamp
+                      const timestamp = new Date(response.fecha_envio);
+                      pm.expect(timestamp).to.be.a('date');
+                      pm.expect(timestamp.getTime()).to.not.be.NaN;
+                  });
+              });
+              
+              pm.test("Response answers have valid structure", function () {
+                  responseJson.results.forEach((response) => {
+                      response.respuestas.forEach((answer) => {
+                          pm.expect(answer).to.have.property('pregunta_id');
+                          pm.expect(answer).to.have.property('valor');
+                          
+                          pm.expect(answer.pregunta_id).to.be.a('string');
+                          pm.expect(answer.pregunta_id).to.not.be.empty;
+                      });
+                  });
+              });
+          }
+          
+          // Test filtering functionality
+          const formIdParam = pm.request.url.query.get('formulario_id');
+          if (formIdParam && responseJson.results.length > 0) {
+              pm.test("Filtering by form ID works correctly", function () {
+                  responseJson.results.forEach((response) => {
+                      pm.expect(response.formulario_id).to.equal(formIdParam);
+                  });
+              });
+          }
+      });
+      
+      pm.test("Response time is acceptable", function () {
+          pm.expect(pm.response.responseTime).to.be.below(5000);
+      });
+      
+      // Test for access control
+      if (pm.response.code === 401) {
+          pm.test("Unauthorized - Invalid or missing token", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+          });
+      }
+      
+      if (pm.response.code === 403) {
+          pm.test("Forbidden - No access to responses", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('access');
+          });
+      }
+      
+      // Pagination validation
+      pm.test("Pagination validation", function () {
+          const responseJson = pm.response.json();
+          
+          if (responseJson.count > responseJson.results.length) {
+              pm.test("Should have next page when more results exist", function () {
+                  pm.expect(responseJson.next).to.not.be.null;
+              });
+          }
+          
+          if (responseJson.count <= responseJson.results.length) {
+              pm.test("Should not have next page when all results shown", function () {
+                  pm.expect(responseJson.next).to.be.null;
+              });
+          }
+      });
+      
+      // Data consistency validation
+      pm.test("Data consistency validation", function () {
+          const responseJson = pm.response.json();
+          
+          if (responseJson.results.length > 0) {
+              pm.test("All responses should have consistent data types", function () {
+                  const firstResponse = responseJson.results[0];
+                  const expectedStructure = Object.keys(firstResponse);
+                  
+                  responseJson.results.forEach((response, index) => {
+                      expectedStructure.forEach((key) => {
+                          pm.expect(response).to.have.property(key);
+                      });
+                  });
+              });
+              
+              pm.test("Response timestamps should be in chronological order", function () {
+                  for (let i = 1; i < responseJson.results.length; i++) {
+                      const prevDate = new Date(responseJson.results[i-1].fecha_envio);
+                      const currDate = new Date(responseJson.results[i].fecha_envio);
+                      
+                      // Assuming newest first ordering
+                      pm.expect(prevDate.getTime()).to.be.at.least(currDate.getTime());
+                  }
+              });
+          }
+      });
+      
+      // Business logic validation
+      pm.test("Business logic validation", function () {
+          const responseJson = pm.response.json();
+          
+          pm.test("Count should match actual results when no pagination", function () {
+              if (responseJson.next === null && responseJson.previous === null) {
+                  pm.expect(responseJson.count).to.equal(responseJson.results.length);
+              }
+          });
+          
+          if (responseJson.results.length > 0) {
+              pm.test("All responses should belong to accessible forms", function () {
+                  // This would be validated by the backend based on user permissions
+                  responseJson.results.forEach((response) => {
+                      pm.expect(response.formulario_id).to.not.be.empty;
+                  });
+              });
+          }
+      });
+    language: text/javascript

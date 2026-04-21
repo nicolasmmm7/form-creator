@@ -1,0 +1,8 @@
+$kind: http-request
+name: Hello Test Endpoint
+method: GET
+url: '{{base_url}}/api/usuarios/hello/'
+order: 8000
+headers:
+  - key: Accept
+    value: application/json

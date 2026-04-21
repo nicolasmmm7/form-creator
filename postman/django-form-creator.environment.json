@@ -1,0 +1,11 @@
+{
+  "id": "django-form-creator-dev",
+  "name": "Django Form Creator Development",
+  "values": [
+    { "key": "base_url", "value": "http://localhost:8000", "enabled": true },
+    { "key": "firebase_token", "value": "", "enabled": true },
+    { "key": "user_id", "value": "", "enabled": true },
+    { "key": "form_id", "value": "", "enabled": true },
+    { "key": "response_id", "value": "", "enabled": true }
+  ]
+}

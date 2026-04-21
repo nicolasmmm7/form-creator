@@ -1,0 +1,14 @@
+$kind: http-request
+name: Delete Response
+method: DELETE
+url: '{{base_url}}/api/respuestas/{{response_id}}/'
+order: 5000
+headers:
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+pathVariables:
+  - key: response_id
+    value: '{{response_id}}'
+    description: Response ID to delete

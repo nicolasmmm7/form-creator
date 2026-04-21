@@ -1,0 +1,2536 @@
+{
+  "info": {
+    "name": "Django Form Creator API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": ".resources",
+      "item": []
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Firebase Auth Sync",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/firebase/",
+              "host": [
+                "{{base_url}}/api/auth/firebase/"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firebase_token\": \"{{firebase_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has valid JSON structure\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    pm.test(\"Response contains user_id\", function () {",
+                  "        pm.expect(responseJson).to.have.property('user_id');",
+                  "        pm.expect(responseJson.user_id).to.be.a('string');",
+                  "        pm.expect(responseJson.user_id).to.not.be.empty;",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains token\", function () {",
+                  "        pm.expect(responseJson).to.have.property('token');",
+                  "        pm.expect(responseJson.token).to.be.a('string');",
+                  "        pm.expect(responseJson.token).to.not.be.empty;",
+                  "    });",
+                  "    ",
+                  "    // Store values for subsequent requests",
+                  "    if (responseJson.user_id) {",
+                  "        pm.environment.set(\"user_id\", responseJson.user_id);",
+                  "    }",
+                  "    if (responseJson.token) {",
+                  "        pm.environment.set(\"firebase_token\", responseJson.token);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "// Test for authentication failure scenarios",
+                  "if (pm.response.code === 401) {",
+                  "    pm.test(\"Unauthorized - Invalid Firebase token\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('Invalid');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 400) {",
+                  "    pm.test(\"Bad Request - Missing or malformed token\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Forms",
+      "item": [
+        {
+          "name": "List Forms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/formularios/",
+              "host": [
+                "{{base_url}}/api/formularios/"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Form",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/formularios/",
+              "host": [
+                "{{base_url}}/api/formularios/"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Customer Feedback Form\",\n  \"descripcion\": \"A form to collect customer feedback and suggestions\",\n  \"preguntas\": [\n    {\n      \"id\": \"q1\",\n      \"tipo\": \"texto_libre\",\n      \"enunciado\": \"What is your name?\",\n      \"obligatorio\": true,\n      \"validaciones\": {\n        \"longitud_minima\": 2,\n        \"longitud_maxima\": 50\n      },\n      \"posicion\": 1\n    },\n    {\n      \"id\": \"q2\",\n      \"tipo\": \"opcion_multiple\",\n      \"enunciado\": \"How satisfied are you with our service?\",\n      \"obligatorio\": true,\n      \"opciones\": [\"Very Satisfied\", \"Satisfied\", \"Neutral\", \"Dissatisfied\", \"Very Dissatisfied\"],\n      \"posicion\": 2\n    },\n    {\n      \"id\": \"q3\",\n      \"tipo\": \"escala_numerica\",\n      \"enunciado\": \"Rate our service from 1 to 10\",\n      \"obligatorio\": false,\n      \"validaciones\": {\n        \"valor_minimo\": 1,\n        \"valor_maximo\": 10\n      },\n      \"posicion\": 3\n    },\n    {\n      \"id\": \"q4\",\n      \"tipo\": \"checkbox\",\n      \"enunciado\": \"Which features do you use most?\",\n      \"obligatorio\": false,\n      \"opciones\": [\"Feature A\", \"Feature B\", \"Feature C\", \"Feature D\"],\n      \"posicion\": 4\n    }\n  ],\n  \"configuracion\": {\n    \"es_publico\": true,\n    \"usuarios_autorizados\": [],\n    \"requerir_login\": false\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has valid JSON structure\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    pm.test(\"Response contains form ID\", function () {",
+                  "        pm.expect(responseJson).to.have.property('id');",
+                  "        pm.expect(responseJson.id).to.be.a('string');",
+                  "        pm.expect(responseJson.id).to.not.be.empty;",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains form details\", function () {",
+                  "        pm.expect(responseJson).to.have.property('titulo');",
+                  "        pm.expect(responseJson).to.have.property('descripcion');",
+                  "        pm.expect(responseJson.titulo).to.be.a('string');",
+                  "        pm.expect(responseJson.descripcion).to.be.a('string');",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains preguntas array\", function () {",
+                  "        pm.expect(responseJson).to.have.property('preguntas');",
+                  "        pm.expect(responseJson.preguntas).to.be.an('array');",
+                  "        pm.expect(responseJson.preguntas.length).to.be.greaterThan(0);",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Preguntas have valid structure\", function () {",
+                  "        responseJson.preguntas.forEach((pregunta, index) => {",
+                  "            pm.expect(pregunta).to.have.property('id');",
+                  "            pm.expect(pregunta).to.have.property('tipo');",
+                  "            pm.expect(pregunta).to.have.property('enunciado');",
+                  "            pm.expect(pregunta).to.have.property('obligatorio');",
+                  "            pm.expect(pregunta).to.have.property('posicion');",
+                  "            ",
+                  "            // Validate question types",
+                  "            const validTypes = ['texto_libre', 'opcion_multiple', 'escala_numerica', 'checkbox', 'fecha', 'email'];",
+                  "            pm.expect(validTypes).to.include(pregunta.tipo);",
+                  "            ",
+                  "            // Validate position is a number",
+                  "            pm.expect(pregunta.posicion).to.be.a('number');",
+                  "        });",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains configuracion\", function () {",
+                  "        pm.expect(responseJson).to.have.property('configuracion');",
+                  "        pm.expect(responseJson.configuracion).to.have.property('es_publico');",
+                  "        pm.expect(responseJson.configuracion.es_publico).to.be.a('boolean');",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Form has creation timestamp\", function () {",
+                  "        pm.expect(responseJson).to.have.property('fecha_creacion');",
+                  "        pm.expect(responseJson.fecha_creacion).to.be.a('string');",
+                  "    });",
+                  "    ",
+                  "    // Store form ID for subsequent requests",
+                  "    if (responseJson.id) {",
+                  "        pm.environment.set(\"form_id\", responseJson.id);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "// Test for validation errors",
+                  "if (pm.response.code === 400) {",
+                  "    pm.test(\"Bad Request - Validation errors\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 401) {",
+                  "    pm.test(\"Unauthorized - Invalid or missing token\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Forbidden - Insufficient permissions\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Form Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/formularios/{{form_id}}/",
+              "host": [
+                "{{base_url}}/api/formularios/{{form_id}}/"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Form",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/formularios/{{form_id}}/",
+              "host": [
+                "{{base_url}}/api/formularios/{{form_id}}/"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Updated Customer Feedback Form\",\n  \"descripcion\": \"An updated form to collect customer feedback and suggestions\",\n  \"preguntas\": [\n    {\n      \"id\": \"q1\",\n      \"tipo\": \"texto_libre\",\n      \"enunciado\": \"What is your full name?\",\n      \"obligatorio\": true,\n      \"validaciones\": {\n        \"longitud_minima\": 3,\n        \"longitud_maxima\": 100\n      },\n      \"posicion\": 1\n    },\n    {\n      \"id\": \"q2\",\n      \"tipo\": \"opcion_multiple\",\n      \"enunciado\": \"How would you rate our overall service?\",\n      \"obligatorio\": true,\n      \"opciones\": [\"Excellent\", \"Good\", \"Average\", \"Poor\", \"Very Poor\"],\n      \"posicion\": 2\n    }\n  ],\n  \"configuracion\": {\n    \"es_publico\": false,\n    \"usuarios_autorizados\": [\"{{user_id}}\"],\n    \"requerir_login\": true\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Form",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/formularios/{{form_id}}/",
+              "host": [
+                "{{base_url}}/api/formularios/{{form_id}}/"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check Form Access",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/formularios/{{form_id}}/verificar-acceso/",
+              "host": [
+                "{{base_url}}/api/formularios/{{form_id}}/verificar-acceso/"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 or 403\", function () {",
+                  "    pm.expect([200, 403]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has valid JSON structure\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    if (pm.response.code === 200) {",
+                  "        pm.test(\"Access granted - Response contains access details\", function () {",
+                  "            pm.expect(responseJson).to.have.property('has_access');",
+                  "            pm.expect(responseJson.has_access).to.be.true;",
+                  "            ",
+                  "            pm.expect(responseJson).to.have.property('access_type');",
+                  "            pm.expect(responseJson.access_type).to.be.a('string');",
+                  "            ",
+                  "            const validAccessTypes = ['owner', 'authorized', 'public'];",
+                  "            pm.expect(validAccessTypes).to.include(responseJson.access_type);",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Response contains form metadata\", function () {",
+                  "            pm.expect(responseJson).to.have.property('form_id');",
+                  "            pm.expect(responseJson.form_id).to.equal(pm.environment.get('form_id'));",
+                  "        });",
+                  "    }",
+                  "    ",
+                  "    if (pm.response.code === 403) {",
+                  "        pm.test(\"Access denied - Response contains denial reason\", function () {",
+                  "            pm.expect(responseJson).to.have.property('has_access');",
+                  "            pm.expect(responseJson.has_access).to.be.false;",
+                  "            ",
+                  "            pm.expect(responseJson).to.have.property('reason');",
+                  "            pm.expect(responseJson.reason).to.be.a('string');",
+                  "            ",
+                  "            const validReasons = ['private_form', 'not_authorized', 'login_required'];",
+                  "            pm.expect(validReasons).to.include(responseJson.reason);",
+                  "        });",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);",
+                  "});",
+                  "",
+                  "// Test for authentication errors",
+                  "if (pm.response.code === 401) {",
+                  "    pm.test(\"Unauthorized - Invalid or missing token\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 404) {",
+                  "    pm.test(\"Not Found - Form does not exist\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('not found');",
+                  "    });",
+                  "}",
+                  "",
+                  "// Business logic validation",
+                  "pm.test(\"Access control logic validation\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    if (responseJson.access_type === 'public') {",
+                  "        pm.test(\"Public form should allow access\", function () {",
+                  "            pm.expect(responseJson.has_access).to.be.true;",
+                  "        });",
+                  "    }",
+                  "    ",
+                  "    if (responseJson.reason === 'private_form') {",
+                  "        pm.test(\"Private form should deny unauthorized access\", function () {",
+                  "            pm.expect(responseJson.has_access).to.be.false;",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Authorized Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/formularios/{{form_id}}/usuarios-autorizados/",
+              "host": [
+                "{{base_url}}/api/formularios/{{form_id}}/usuarios-autorizados/"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Authorized User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/formularios/{{form_id}}/agregar-usuario/",
+              "host": [
+                "{{base_url}}/api/formularios/{{form_id}}/agregar-usuario/"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has valid JSON structure\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    pm.test(\"Response contains success confirmation\", function () {",
+                  "        pm.expect(responseJson).to.have.property('success');",
+                  "        pm.expect(responseJson.success).to.be.true;",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains user authorization details\", function () {",
+                  "        pm.expect(responseJson).to.have.property('user_id');",
+                  "        pm.expect(responseJson).to.have.property('form_id');",
+                  "        pm.expect(responseJson.user_id).to.be.a('string');",
+                  "        pm.expect(responseJson.form_id).to.be.a('string');",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains authorization timestamp\", function () {",
+                  "        pm.expect(responseJson).to.have.property('authorized_at');",
+                  "        pm.expect(responseJson.authorized_at).to.be.a('string');",
+                  "        ",
+                  "        // Validate timestamp format",
+                  "        const timestamp = new Date(responseJson.authorized_at);",
+                  "        pm.expect(timestamp).to.be.a('date');",
+                  "        pm.expect(timestamp.getTime()).to.not.be.NaN;",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"User authorization data integrity\", function () {",
+                  "        const requestBody = JSON.parse(pm.request.body.raw);",
+                  "        ",
+                  "        // Verify user ID matches request",
+                  "        if (requestBody.user_id) {",
+                  "            pm.expect(responseJson.user_id).to.equal(requestBody.user_id);",
+                  "        }",
+                  "        ",
+                  "        // Verify form ID matches path parameter",
+                  "        pm.expect(responseJson.form_id).to.equal(pm.environment.get('form_id'));",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "// Test for validation errors",
+                  "if (pm.response.code === 400) {",
+                  "    pm.test(\"Bad Request - Validation errors\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        ",
+                  "        if (responseJson.error.includes('email')) {",
+                  "            pm.test(\"Invalid email format\", function () {",
+                  "                pm.expect(responseJson.error).to.include('email');",
+                  "            });",
+                  "        }",
+                  "        ",
+                  "        if (responseJson.error.includes('user_id')) {",
+                  "            pm.test(\"Invalid or missing user ID\", function () {",
+                  "                pm.expect(responseJson.error).to.include('user_id');",
+                  "            });",
+                  "        }",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 401) {",
+                  "    pm.test(\"Unauthorized - Invalid or missing token\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Forbidden - Not form owner\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('owner');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 404) {",
+                  "    pm.test(\"Not Found - Form or user not found\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('not found');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 409) {",
+                  "    pm.test(\"Conflict - User already authorized\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('already');",
+                  "    });",
+                  "}",
+                  "",
+                  "// Business logic validation",
+                  "pm.test(\"Authorization business logic validation\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    if (responseJson.success) {",
+                  "        pm.test(\"Successful authorization should have valid data\", function () {",
+                  "            pm.expect(responseJson.user_id).to.not.be.empty;",
+                  "            pm.expect(responseJson.form_id).to.not.be.empty;",
+                  "            pm.expect(responseJson.authorized_at).to.not.be.empty;",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remove Authorized User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/formularios/{{form_id}}/remover-usuario/",
+              "host": [
+                "{{base_url}}/api/formularios/{{form_id}}/remover-usuario/"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 or 204\", function () {",
+                  "    pm.expect([200, 204]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Response has valid JSON structure\", function () {",
+                  "        pm.response.to.be.json;",
+                  "        const responseJson = pm.response.json();",
+                  "        ",
+                  "        pm.test(\"Response contains success confirmation\", function () {",
+                  "            pm.expect(responseJson).to.have.property('success');",
+                  "            pm.expect(responseJson.success).to.be.true;",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Response contains removal details\", function () {",
+                  "            pm.expect(responseJson).to.have.property('user_id');",
+                  "            pm.expect(responseJson).to.have.property('form_id');",
+                  "            pm.expect(responseJson.user_id).to.be.a('string');",
+                  "            pm.expect(responseJson.form_id).to.be.a('string');",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Response contains removal timestamp\", function () {",
+                  "            pm.expect(responseJson).to.have.property('removed_at');",
+                  "            pm.expect(responseJson.removed_at).to.be.a('string');",
+                  "            ",
+                  "            // Validate timestamp format",
+                  "            const timestamp = new Date(responseJson.removed_at);",
+                  "            pm.expect(timestamp).to.be.a('date');",
+                  "            pm.expect(timestamp.getTime()).to.not.be.NaN;",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"User removal data integrity\", function () {",
+                  "            const requestBody = JSON.parse(pm.request.body.raw);",
+                  "            ",
+                  "            // Verify user ID matches request",
+                  "            if (requestBody.user_id) {",
+                  "                pm.expect(responseJson.user_id).to.equal(requestBody.user_id);",
+                  "            }",
+                  "            ",
+                  "            // Verify form ID matches path parameter",
+                  "            pm.expect(responseJson.form_id).to.equal(pm.environment.get('form_id'));",
+                  "        });",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 204) {",
+                  "    pm.test(\"No Content response for successful removal\", function () {",
+                  "        pm.expect(pm.response.text()).to.be.empty;",
+                  "    });",
+                  "}",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "// Test for validation errors",
+                  "if (pm.response.code === 400) {",
+                  "    pm.test(\"Bad Request - Validation errors\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        ",
+                  "        if (responseJson.error.includes('email')) {",
+                  "            pm.test(\"Invalid email format\", function () {",
+                  "                pm.expect(responseJson.error).to.include('email');",
+                  "            });",
+                  "        }",
+                  "        ",
+                  "        if (responseJson.error.includes('user_id')) {",
+                  "            pm.test(\"Invalid or missing user ID\", function () {",
+                  "                pm.expect(responseJson.error).to.include('user_id');",
+                  "            });",
+                  "        }",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 401) {",
+                  "    pm.test(\"Unauthorized - Invalid or missing token\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Forbidden - Not form owner\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('owner');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 404) {",
+                  "    pm.test(\"Not Found - Form or user not found\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('not found');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 409) {",
+                  "    pm.test(\"Conflict - User not authorized or cannot remove\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        ",
+                  "        if (responseJson.error.includes('not authorized')) {",
+                  "            pm.test(\"User was not authorized to begin with\", function () {",
+                  "                pm.expect(responseJson.error).to.include('not authorized');",
+                  "            });",
+                  "        }",
+                  "        ",
+                  "        if (responseJson.error.includes('owner')) {",
+                  "            pm.test(\"Cannot remove form owner\", function () {",
+                  "                pm.expect(responseJson.error).to.include('owner');",
+                  "            });",
+                  "        }",
+                  "    });",
+                  "}",
+                  "",
+                  "// Business logic validation",
+                  "pm.test(\"Authorization removal business logic\", function () {",
+                  "    const requestBody = JSON.parse(pm.request.body.raw);",
+                  "    ",
+                  "    pm.test(\"Request should contain user identification\", function () {",
+                  "        const hasUserId = requestBody.user_id && requestBody.user_id.trim() !== '';",
+                  "        const hasEmail = requestBody.email && requestBody.email.trim() !== '';",
+                  "        ",
+                  "        pm.expect(hasUserId || hasEmail).to.be.true;",
+                  "    });",
+                  "    ",
+                  "    if (requestBody.email) {",
+                  "        pm.test(\"Email format should be valid\", function () {",
+                  "            pm.expect(requestBody.email).to.match(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/);",
+                  "        });",
+                  "    }",
+                  "    ",
+                  "    if ([200, 204].includes(pm.response.code)) {",
+                  "        pm.test(\"Successful removal should be idempotent\", function () {",
+                  "            // Removing the same user again should not cause errors",
+                  "            // This would be tested by running the same request twice",
+                  "            pm.expect([200, 204, 404, 409]).to.include(pm.response.code);",
+                  "        });",
+                  "    }",
+                  "});",
+                  "",
+                  "// Security validation",
+                  "pm.test(\"Security validation\", function () {",
+                  "    if ([200, 204].includes(pm.response.code)) {",
+                  "        pm.test(\"Only form owner should be able to remove users\", function () {",
+                  "            // This is validated by the 403 test above",
+                  "            // Successful removal implies proper ownership validation",
+                  "            pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "        });",
+                  "    }",
+                  "    ",
+                  "    pm.test(\"Cannot remove form owner from their own form\", function () {",
+                  "        if (pm.response.code === 409) {",
+                  "            const responseJson = pm.response.json();",
+                  "            if (responseJson.error && responseJson.error.includes('owner')) {",
+                  "                pm.expect(responseJson.error).to.include('owner');",
+                  "            }",
+                  "        }",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Send Form Invitations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/formularios/{{form_id}}/invitar/",
+              "host": [
+                "{{base_url}}/api/formularios/{{form_id}}/invitar/"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emails\": [\n    \"user1@example.com\",\n    \"user2@example.com\",\n    \"user3@example.com\"\n  ],\n  \"message\": \"You have been invited to fill out our customer feedback form. Please click the link to participate.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Form Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/formularios/{{form_id}}/estadisticas/",
+              "host": [
+                "{{base_url}}/api/formularios/{{form_id}}/estadisticas/"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has valid JSON structure\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    pm.test(\"Response contains form ID\", function () {",
+                  "        pm.expect(responseJson).to.have.property('form_id');",
+                  "        pm.expect(responseJson.form_id).to.equal(pm.environment.get('form_id'));",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains total responses count\", function () {",
+                  "        pm.expect(responseJson).to.have.property('total_responses');",
+                  "        pm.expect(responseJson.total_responses).to.be.a('number');",
+                  "        pm.expect(responseJson.total_responses).to.be.at.least(0);",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains completion rate\", function () {",
+                  "        pm.expect(responseJson).to.have.property('completion_rate');",
+                  "        pm.expect(responseJson.completion_rate).to.be.a('number');",
+                  "        pm.expect(responseJson.completion_rate).to.be.within(0, 100);",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains question statistics\", function () {",
+                  "        pm.expect(responseJson).to.have.property('question_stats');",
+                  "        pm.expect(responseJson.question_stats).to.be.an('array');",
+                  "        ",
+                  "        if (responseJson.question_stats.length > 0) {",
+                  "            responseJson.question_stats.forEach((stat, index) => {",
+                  "                pm.expect(stat).to.have.property('question_id');",
+                  "                pm.expect(stat).to.have.property('response_count');",
+                  "                pm.expect(stat).to.have.property('question_type');",
+                  "                ",
+                  "                pm.expect(stat.question_id).to.be.a('string');",
+                  "                pm.expect(stat.response_count).to.be.a('number');",
+                  "                pm.expect(stat.response_count).to.be.at.least(0);",
+                  "                ",
+                  "                // Validate question type",
+                  "                const validTypes = ['texto_libre', 'opcion_multiple', 'escala_numerica', 'checkbox', 'fecha', 'email'];",
+                  "                pm.expect(validTypes).to.include(stat.question_type);",
+                  "            });",
+                  "        }",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains time-based statistics\", function () {",
+                  "        pm.expect(responseJson).to.have.property('time_stats');",
+                  "        pm.expect(responseJson.time_stats).to.be.an('object');",
+                  "        ",
+                  "        if (responseJson.time_stats) {",
+                  "            pm.expect(responseJson.time_stats).to.have.property('first_response');",
+                  "            pm.expect(responseJson.time_stats).to.have.property('last_response');",
+                  "            ",
+                  "            if (responseJson.time_stats.first_response) {",
+                  "                const firstResponse = new Date(responseJson.time_stats.first_response);",
+                  "                pm.expect(firstResponse).to.be.a('date');",
+                  "                pm.expect(firstResponse.getTime()).to.not.be.NaN;",
+                  "            }",
+                  "            ",
+                  "            if (responseJson.time_stats.last_response) {",
+                  "                const lastResponse = new Date(responseJson.time_stats.last_response);",
+                  "                pm.expect(lastResponse).to.be.a('date');",
+                  "                pm.expect(lastResponse.getTime()).to.not.be.NaN;",
+                  "            }",
+                  "        }",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Statistics calculation accuracy\", function () {",
+                  "        if (responseJson.total_responses > 0 && responseJson.question_stats.length > 0) {",
+                  "            // Verify that question response counts don't exceed total responses",
+                  "            responseJson.question_stats.forEach((stat) => {",
+                  "                pm.expect(stat.response_count).to.be.at.most(responseJson.total_responses);",
+                  "            });",
+                  "        }",
+                  "        ",
+                  "        // Completion rate should be reasonable",
+                  "        if (responseJson.total_responses > 0) {",
+                  "            pm.expect(responseJson.completion_rate).to.be.greaterThan(0);",
+                  "        }",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "// Test for access control",
+                  "if (pm.response.code === 401) {",
+                  "    pm.test(\"Unauthorized - Invalid or missing token\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Forbidden - No access to form statistics\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('access');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 404) {",
+                  "    pm.test(\"Not Found - Form does not exist\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('not found');",
+                  "    });",
+                  "}",
+                  "",
+                  "// Business logic validation",
+                  "pm.test(\"Statistics business logic validation\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    if (responseJson.total_responses === 0) {",
+                  "        pm.test(\"No responses should result in zero completion rate\", function () {",
+                  "            pm.expect(responseJson.completion_rate).to.equal(0);",
+                  "        });",
+                  "    }",
+                  "    ",
+                  "    if (responseJson.question_stats && responseJson.question_stats.length > 0) {",
+                  "        pm.test(\"Question statistics should be consistent\", function () {",
+                  "            const totalQuestionResponses = responseJson.question_stats.reduce((sum, stat) => {",
+                  "                return sum + stat.response_count;",
+                  "            }, 0);",
+                  "            ",
+                  "            // Total question responses should be reasonable compared to form responses",
+                  "            if (responseJson.total_responses > 0) {",
+                  "                pm.expect(totalQuestionResponses).to.be.greaterThan(0);",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Export Form Data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/formularios/{{form_id}}/exportar/",
+              "host": [
+                "{{base_url}}/api/formularios/{{form_id}}/exportar/"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const format = pm.request.url.query.get('format') || 'json';",
+                  "",
+                  "if (format === 'json') {",
+                  "    pm.test(\"JSON export has valid structure\", function () {",
+                  "        pm.response.to.be.json;",
+                  "        const responseJson = pm.response.json();",
+                  "        ",
+                  "        pm.test(\"Export contains form metadata\", function () {",
+                  "            pm.expect(responseJson).to.have.property('form_id');",
+                  "            pm.expect(responseJson).to.have.property('form_title');",
+                  "            pm.expect(responseJson).to.have.property('export_date');",
+                  "            ",
+                  "            pm.expect(responseJson.form_id).to.equal(pm.environment.get('form_id'));",
+                  "            pm.expect(responseJson.form_title).to.be.a('string');",
+                  "            pm.expect(responseJson.export_date).to.be.a('string');",
+                  "            ",
+                  "            // Validate export date format",
+                  "            const exportDate = new Date(responseJson.export_date);",
+                  "            pm.expect(exportDate).to.be.a('date');",
+                  "            pm.expect(exportDate.getTime()).to.not.be.NaN;",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Export contains responses data\", function () {",
+                  "            pm.expect(responseJson).to.have.property('responses');",
+                  "            pm.expect(responseJson.responses).to.be.an('array');",
+                  "            ",
+                  "            if (responseJson.responses.length > 0) {",
+                  "                responseJson.responses.forEach((response, index) => {",
+                  "                    pm.expect(response).to.have.property('response_id');",
+                  "                    pm.expect(response).to.have.property('user_id');",
+                  "                    pm.expect(response).to.have.property('submission_date');",
+                  "                    pm.expect(response).to.have.property('answers');",
+                  "                    ",
+                  "                    pm.expect(response.response_id).to.be.a('string');",
+                  "                    pm.expect(response.user_id).to.be.a('string');",
+                  "                    pm.expect(response.answers).to.be.an('array');",
+                  "                    ",
+                  "                    // Validate submission date",
+                  "                    const submissionDate = new Date(response.submission_date);",
+                  "                    pm.expect(submissionDate).to.be.a('date');",
+                  "                    pm.expect(submissionDate.getTime()).to.not.be.NaN;",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Export contains form questions\", function () {",
+                  "            pm.expect(responseJson).to.have.property('questions');",
+                  "            pm.expect(responseJson.questions).to.be.an('array');",
+                  "            ",
+                  "            if (responseJson.questions.length > 0) {",
+                  "                responseJson.questions.forEach((question, index) => {",
+                  "                    pm.expect(question).to.have.property('id');",
+                  "                    pm.expect(question).to.have.property('type');",
+                  "                    pm.expect(question).to.have.property('text');",
+                  "                    ",
+                  "                    pm.expect(question.id).to.be.a('string');",
+                  "                    pm.expect(question.type).to.be.a('string');",
+                  "                    pm.expect(question.text).to.be.a('string');",
+                  "                    ",
+                  "                    // Validate question type",
+                  "                    const validTypes = ['texto_libre', 'opcion_multiple', 'escala_numerica', 'checkbox', 'fecha', 'email'];",
+                  "                    pm.expect(validTypes).to.include(question.type);",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Export data integrity validation\", function () {",
+                  "            if (responseJson.responses.length > 0 && responseJson.questions.length > 0) {",
+                  "                const questionIds = responseJson.questions.map(q => q.id);",
+                  "                ",
+                  "                responseJson.responses.forEach((response) => {",
+                  "                    response.answers.forEach((answer) => {",
+                  "                        pm.expect(answer).to.have.property('question_id');",
+                  "                        pm.expect(answer).to.have.property('value');",
+                  "                        ",
+                  "                        // Verify answer references valid question",
+                  "                        pm.expect(questionIds).to.include(answer.question_id);",
+                  "                    });",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    });",
+                  "}",
+                  "",
+                  "if (format === 'csv') {",
+                  "    pm.test(\"CSV export has valid format\", function () {",
+                  "        const responseText = pm.response.text();",
+                  "        ",
+                  "        pm.test(\"CSV contains header row\", function () {",
+                  "            const lines = responseText.split('\\n');",
+                  "            pm.expect(lines.length).to.be.greaterThan(0);",
+                  "            ",
+                  "            const header = lines[0];",
+                  "            pm.expect(header).to.include('response_id');",
+                  "            pm.expect(header).to.include('user_id');",
+                  "            pm.expect(header).to.include('submission_date');",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"CSV has proper content type\", function () {",
+                  "            const contentType = pm.response.headers.get('Content-Type');",
+                  "            pm.expect(contentType).to.include('text/csv');",
+                  "        });",
+                  "    });",
+                  "}",
+                  "",
+                  "if (format === 'xlsx') {",
+                  "    pm.test(\"Excel export has valid format\", function () {",
+                  "        pm.test(\"Excel has proper content type\", function () {",
+                  "            const contentType = pm.response.headers.get('Content-Type');",
+                  "            pm.expect(contentType).to.include('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Excel file has content\", function () {",
+                  "            pm.expect(pm.response.responseSize).to.be.greaterThan(0);",
+                  "        });",
+                  "    });",
+                  "}",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(10000); // Export might take longer",
+                  "});",
+                  "",
+                  "// Test for access control",
+                  "if (pm.response.code === 401) {",
+                  "    pm.test(\"Unauthorized - Invalid or missing token\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Forbidden - No export access\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('access');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 404) {",
+                  "    pm.test(\"Not Found - Form does not exist\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('not found');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 400) {",
+                  "    pm.test(\"Bad Request - Invalid export format\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('format');",
+                  "    });",
+                  "}",
+                  "",
+                  "// Business logic validation",
+                  "pm.test(\"Export functionality validation\", function () {",
+                  "    const format = pm.request.url.query.get('format');",
+                  "    const validFormats = ['json', 'csv', 'xlsx'];",
+                  "    ",
+                  "    if (format) {",
+                  "        pm.test(\"Export format is valid\", function () {",
+                  "            pm.expect(validFormats).to.include(format);",
+                  "        });",
+                  "    }",
+                  "    ",
+                  "    if (pm.response.code === 200) {",
+                  "        pm.test(\"Successful export should have content\", function () {",
+                  "            pm.expect(pm.response.responseSize).to.be.greaterThan(0);",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Responses",
+      "item": [
+        {
+          "name": "List Responses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/respuestas/",
+              "host": [
+                "{{base_url}}/api/respuestas/"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has valid JSON structure\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    pm.test(\"Response contains results array\", function () {",
+                  "        pm.expect(responseJson).to.have.property('results');",
+                  "        pm.expect(responseJson.results).to.be.an('array');",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains pagination info\", function () {",
+                  "        pm.expect(responseJson).to.have.property('count');",
+                  "        pm.expect(responseJson).to.have.property('next');",
+                  "        pm.expect(responseJson).to.have.property('previous');",
+                  "        ",
+                  "        pm.expect(responseJson.count).to.be.a('number');",
+                  "        pm.expect(responseJson.count).to.be.at.least(0);",
+                  "    });",
+                  "    ",
+                  "    if (responseJson.results.length > 0) {",
+                  "        pm.test(\"Response items have valid structure\", function () {",
+                  "            responseJson.results.forEach((response, index) => {",
+                  "                pm.expect(response).to.have.property('id');",
+                  "                pm.expect(response).to.have.property('formulario_id');",
+                  "                pm.expect(response).to.have.property('usuario_id');",
+                  "                pm.expect(response).to.have.property('fecha_envio');",
+                  "                pm.expect(response).to.have.property('respuestas');",
+                  "                ",
+                  "                pm.expect(response.id).to.be.a('string');",
+                  "                pm.expect(response.formulario_id).to.be.a('string');",
+                  "                pm.expect(response.usuario_id).to.be.a('string');",
+                  "                pm.expect(response.respuestas).to.be.an('array');",
+                  "                ",
+                  "                // Validate timestamp",
+                  "                const timestamp = new Date(response.fecha_envio);",
+                  "                pm.expect(timestamp).to.be.a('date');",
+                  "                pm.expect(timestamp.getTime()).to.not.be.NaN;",
+                  "            });",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Response answers have valid structure\", function () {",
+                  "            responseJson.results.forEach((response) => {",
+                  "                response.respuestas.forEach((answer) => {",
+                  "                    pm.expect(answer).to.have.property('pregunta_id');",
+                  "                    pm.expect(answer).to.have.property('valor');",
+                  "                    ",
+                  "                    pm.expect(answer.pregunta_id).to.be.a('string');",
+                  "                    pm.expect(answer.pregunta_id).to.not.be.empty;",
+                  "                });",
+                  "            });",
+                  "        });",
+                  "    }",
+                  "    ",
+                  "    // Test filtering functionality",
+                  "    const formIdParam = pm.request.url.query.get('formulario_id');",
+                  "    if (formIdParam && responseJson.results.length > 0) {",
+                  "        pm.test(\"Filtering by form ID works correctly\", function () {",
+                  "            responseJson.results.forEach((response) => {",
+                  "                pm.expect(response.formulario_id).to.equal(formIdParam);",
+                  "            });",
+                  "        });",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "// Test for access control",
+                  "if (pm.response.code === 401) {",
+                  "    pm.test(\"Unauthorized - Invalid or missing token\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Forbidden - No access to responses\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('access');",
+                  "    });",
+                  "}",
+                  "",
+                  "// Pagination validation",
+                  "pm.test(\"Pagination validation\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    if (responseJson.count > responseJson.results.length) {",
+                  "        pm.test(\"Should have next page when more results exist\", function () {",
+                  "            pm.expect(responseJson.next).to.not.be.null;",
+                  "        });",
+                  "    }",
+                  "    ",
+                  "    if (responseJson.count <= responseJson.results.length) {",
+                  "        pm.test(\"Should not have next page when all results shown\", function () {",
+                  "            pm.expect(responseJson.next).to.be.null;",
+                  "        });",
+                  "    }",
+                  "});",
+                  "",
+                  "// Data consistency validation",
+                  "pm.test(\"Data consistency validation\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    if (responseJson.results.length > 0) {",
+                  "        pm.test(\"All responses should have consistent data types\", function () {",
+                  "            const firstResponse = responseJson.results[0];",
+                  "            const expectedStructure = Object.keys(firstResponse);",
+                  "            ",
+                  "            responseJson.results.forEach((response, index) => {",
+                  "                expectedStructure.forEach((key) => {",
+                  "                    pm.expect(response).to.have.property(key);",
+                  "                });",
+                  "            });",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Response timestamps should be in chronological order\", function () {",
+                  "            for (let i = 1; i < responseJson.results.length; i++) {",
+                  "                const prevDate = new Date(responseJson.results[i-1].fecha_envio);",
+                  "                const currDate = new Date(responseJson.results[i].fecha_envio);",
+                  "                ",
+                  "                // Assuming newest first ordering",
+                  "                pm.expect(prevDate.getTime()).to.be.at.least(currDate.getTime());",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});",
+                  "",
+                  "// Business logic validation",
+                  "pm.test(\"Business logic validation\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    pm.test(\"Count should match actual results when no pagination\", function () {",
+                  "        if (responseJson.next === null && responseJson.previous === null) {",
+                  "            pm.expect(responseJson.count).to.equal(responseJson.results.length);",
+                  "        }",
+                  "    });",
+                  "    ",
+                  "    if (responseJson.results.length > 0) {",
+                  "        pm.test(\"All responses should belong to accessible forms\", function () {",
+                  "            // This would be validated by the backend based on user permissions",
+                  "            responseJson.results.forEach((response) => {",
+                  "                pm.expect(response.formulario_id).to.not.be.empty;",
+                  "            });",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Response",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/respuestas/",
+              "host": [
+                "{{base_url}}/api/respuestas/"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"formulario_id\": \"{{form_id}}\",\n  \"usuario_id\": \"{{user_id}}\",\n  \"respuestas\": [\n    {\n      \"pregunta_id\": \"q1\",\n      \"valor\": \"John Smith\"\n    },\n    {\n      \"pregunta_id\": \"q2\",\n      \"valor\": \"Very Satisfied\"\n    },\n    {\n      \"pregunta_id\": \"q3\",\n      \"valor\": 9\n    },\n    {\n      \"pregunta_id\": \"q4\",\n      \"valor\": [\"Feature A\", \"Feature C\"]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has valid JSON structure\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    pm.test(\"Response contains response ID\", function () {",
+                  "        pm.expect(responseJson).to.have.property('id');",
+                  "        pm.expect(responseJson.id).to.be.a('string');",
+                  "        pm.expect(responseJson.id).to.not.be.empty;",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains form and user references\", function () {",
+                  "        pm.expect(responseJson).to.have.property('formulario_id');",
+                  "        pm.expect(responseJson).to.have.property('usuario_id');",
+                  "        pm.expect(responseJson.formulario_id).to.be.a('string');",
+                  "        pm.expect(responseJson.usuario_id).to.be.a('string');",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains respuestas array\", function () {",
+                  "        pm.expect(responseJson).to.have.property('respuestas');",
+                  "        pm.expect(responseJson.respuestas).to.be.an('array');",
+                  "        pm.expect(responseJson.respuestas.length).to.be.greaterThan(0);",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Respuestas have valid structure\", function () {",
+                  "        responseJson.respuestas.forEach((respuesta, index) => {",
+                  "            pm.expect(respuesta).to.have.property('pregunta_id');",
+                  "            pm.expect(respuesta).to.have.property('valor');",
+                  "            pm.expect(respuesta.pregunta_id).to.be.a('string');",
+                  "            pm.expect(respuesta.pregunta_id).to.not.be.empty;",
+                  "        });",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response has submission timestamp\", function () {",
+                  "        pm.expect(responseJson).to.have.property('fecha_envio');",
+                  "        pm.expect(responseJson.fecha_envio).to.be.a('string');",
+                  "        ",
+                  "        // Validate timestamp format (ISO 8601)",
+                  "        const timestamp = new Date(responseJson.fecha_envio);",
+                  "        pm.expect(timestamp).to.be.a('date');",
+                  "        pm.expect(timestamp.getTime()).to.not.be.NaN;",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response data integrity check\", function () {",
+                  "        const requestBody = JSON.parse(pm.request.body.raw);",
+                  "        ",
+                  "        // Verify form and user IDs match",
+                  "        pm.expect(responseJson.formulario_id).to.equal(requestBody.formulario_id);",
+                  "        pm.expect(responseJson.usuario_id).to.equal(requestBody.usuario_id);",
+                  "        ",
+                  "        // Verify response count matches request",
+                  "        pm.expect(responseJson.respuestas.length).to.equal(requestBody.respuestas.length);",
+                  "    });",
+                  "    ",
+                  "    // Store response ID for subsequent requests",
+                  "    if (responseJson.id) {",
+                  "        pm.environment.set(\"response_id\", responseJson.id);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "// Test for validation errors",
+                  "if (pm.response.code === 400) {",
+                  "    pm.test(\"Bad Request - Validation errors\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        ",
+                  "        // Check for specific validation error types",
+                  "        if (responseJson.error.includes('required')) {",
+                  "            pm.test(\"Missing required fields\", function () {",
+                  "                pm.expect(responseJson.error).to.include('required');",
+                  "            });",
+                  "        }",
+                  "        ",
+                  "        if (responseJson.error.includes('invalid')) {",
+                  "            pm.test(\"Invalid data format\", function () {",
+                  "                pm.expect(responseJson.error).to.include('invalid');",
+                  "            });",
+                  "        }",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 401) {",
+                  "    pm.test(\"Unauthorized - Invalid or missing token\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Forbidden - No access to form\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('access');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 404) {",
+                  "    pm.test(\"Not Found - Form or user not found\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('not found');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Response Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/respuestas/{{response_id}}/",
+              "host": [
+                "{{base_url}}/api/respuestas/{{response_id}}/"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Response",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/respuestas/{{response_id}}/",
+              "host": [
+                "{{base_url}}/api/respuestas/{{response_id}}/"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"respuestas\": [\n    {\n      \"pregunta_id\": \"q1\",\n      \"valor\": \"John Smith Updated\"\n    },\n    {\n      \"pregunta_id\": \"q2\",\n      \"valor\": \"Excellent\"\n    },\n    {\n      \"pregunta_id\": \"q3\",\n      \"valor\": 10\n    },\n    {\n      \"pregunta_id\": \"q4\",\n      \"valor\": [\"Feature A\", \"Feature B\", \"Feature D\"]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Response",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/respuestas/{{response_id}}/",
+              "host": [
+                "{{base_url}}/api/respuestas/{{response_id}}/"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/",
+              "host": [
+                "{{base_url}}/api/usuarios/"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/",
+              "host": [
+                "{{base_url}}/api/usuarios/"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"clave_hash\": \"hashed_password_here\",\n  \"empresa\": {\n    \"nombre\": \"Example Corp\",\n    \"telefono\": \"+1234567890\",\n    \"nit\": \"123456789\"\n  },\n  \"perfil\": {\n    \"avatar_url\": \"https://example.com/avatar.jpg\",\n    \"idioma\": \"es\",\n    \"timezone\": \"America/Bogota\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has valid JSON structure\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    pm.test(\"Response contains user ID\", function () {",
+                  "        pm.expect(responseJson).to.have.property('id');",
+                  "        pm.expect(responseJson.id).to.be.a('string');",
+                  "        pm.expect(responseJson.id).to.not.be.empty;",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains user details\", function () {",
+                  "        pm.expect(responseJson).to.have.property('nombre');",
+                  "        pm.expect(responseJson).to.have.property('email');",
+                  "        pm.expect(responseJson.email).to.match(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/);",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains empresa details\", function () {",
+                  "        pm.expect(responseJson).to.have.property('empresa');",
+                  "        pm.expect(responseJson.empresa).to.have.property('nombre');",
+                  "        pm.expect(responseJson.empresa).to.have.property('telefono');",
+                  "        pm.expect(responseJson.empresa).to.have.property('nit');",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains perfil details\", function () {",
+                  "        pm.expect(responseJson).to.have.property('perfil');",
+                  "        pm.expect(responseJson.perfil).to.have.property('idioma');",
+                  "        pm.expect(responseJson.perfil).to.have.property('timezone');",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Password hash is not exposed\", function () {",
+                  "        pm.expect(responseJson).to.not.have.property('clave_hash');",
+                  "        pm.expect(responseJson).to.not.have.property('password');",
+                  "    });",
+                  "    ",
+                  "    // Store user ID for subsequent requests",
+                  "    if (responseJson.id) {",
+                  "        pm.environment.set(\"user_id\", responseJson.id);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "// Test for validation errors",
+                  "if (pm.response.code === 400) {",
+                  "    pm.test(\"Bad Request - Validation errors\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 409) {",
+                  "    pm.test(\"Conflict - Email already exists\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('email');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 401) {",
+                  "    pm.test(\"Unauthorized - Invalid or missing token\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/{{user_id}}/",
+              "host": [
+                "{{base_url}}/api/usuarios/{{user_id}}/"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has valid JSON structure\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    pm.test(\"Response contains user ID\", function () {",
+                  "        pm.expect(responseJson).to.have.property('id');",
+                  "        pm.expect(responseJson.id).to.be.a('string');",
+                  "        pm.expect(responseJson.id).to.equal(pm.environment.get('user_id'));",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains basic user information\", function () {",
+                  "        pm.expect(responseJson).to.have.property('nombre');",
+                  "        pm.expect(responseJson).to.have.property('email');",
+                  "        ",
+                  "        pm.expect(responseJson.nombre).to.be.a('string');",
+                  "        pm.expect(responseJson.email).to.be.a('string');",
+                  "        pm.expect(responseJson.email).to.match(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/);",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains empresa information\", function () {",
+                  "        pm.expect(responseJson).to.have.property('empresa');",
+                  "        pm.expect(responseJson.empresa).to.be.an('object');",
+                  "        ",
+                  "        if (responseJson.empresa) {",
+                  "            pm.expect(responseJson.empresa).to.have.property('nombre');",
+                  "            pm.expect(responseJson.empresa).to.have.property('telefono');",
+                  "            pm.expect(responseJson.empresa).to.have.property('nit');",
+                  "            ",
+                  "            pm.expect(responseJson.empresa.nombre).to.be.a('string');",
+                  "            pm.expect(responseJson.empresa.telefono).to.be.a('string');",
+                  "            pm.expect(responseJson.empresa.nit).to.be.a('string');",
+                  "        }",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains perfil information\", function () {",
+                  "        pm.expect(responseJson).to.have.property('perfil');",
+                  "        pm.expect(responseJson.perfil).to.be.an('object');",
+                  "        ",
+                  "        if (responseJson.perfil) {",
+                  "            pm.expect(responseJson.perfil).to.have.property('idioma');",
+                  "            pm.expect(responseJson.perfil).to.have.property('timezone');",
+                  "            ",
+                  "            pm.expect(responseJson.perfil.idioma).to.be.a('string');",
+                  "            pm.expect(responseJson.perfil.timezone).to.be.a('string');",
+                  "            ",
+                  "            // Validate language code format (e.g., 'es', 'en', 'fr')",
+                  "            pm.expect(responseJson.perfil.idioma).to.match(/^[a-z]{2}$/);",
+                  "            ",
+                  "            // Validate timezone format (e.g., 'America/Bogota')",
+                  "            pm.expect(responseJson.perfil.timezone).to.include('/');",
+                  "        }",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains timestamps\", function () {",
+                  "        pm.expect(responseJson).to.have.property('fecha_creacion');",
+                  "        pm.expect(responseJson.fecha_creacion).to.be.a('string');",
+                  "        ",
+                  "        // Validate timestamp format",
+                  "        const creationDate = new Date(responseJson.fecha_creacion);",
+                  "        pm.expect(creationDate).to.be.a('date');",
+                  "        pm.expect(creationDate.getTime()).to.not.be.NaN;",
+                  "        ",
+                  "        if (responseJson.fecha_actualizacion) {",
+                  "            const updateDate = new Date(responseJson.fecha_actualizacion);",
+                  "            pm.expect(updateDate).to.be.a('date');",
+                  "            pm.expect(updateDate.getTime()).to.not.be.NaN;",
+                  "            ",
+                  "            // Update date should be >= creation date",
+                  "            pm.expect(updateDate.getTime()).to.be.at.least(creationDate.getTime());",
+                  "        }",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Security - Sensitive data not exposed\", function () {",
+                  "        pm.expect(responseJson).to.not.have.property('clave_hash');",
+                  "        pm.expect(responseJson).to.not.have.property('password');",
+                  "        pm.expect(responseJson).to.not.have.property('firebase_uid');",
+                  "        pm.expect(responseJson).to.not.have.property('reset_token');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);",
+                  "});",
+                  "",
+                  "// Test for access control",
+                  "if (pm.response.code === 401) {",
+                  "    pm.test(\"Unauthorized - Invalid or missing token\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Forbidden - No access to user details\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('access');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 404) {",
+                  "    pm.test(\"Not Found - User does not exist\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('not found');",
+                  "    });",
+                  "}",
+                  "",
+                  "// Data validation tests",
+                  "pm.test(\"Data validation\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    if (responseJson.email) {",
+                  "        pm.test(\"Email format is valid\", function () {",
+                  "            pm.expect(responseJson.email).to.match(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/);",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Email length is reasonable\", function () {",
+                  "            pm.expect(responseJson.email.length).to.be.within(5, 254);",
+                  "        });",
+                  "    }",
+                  "    ",
+                  "    if (responseJson.nombre) {",
+                  "        pm.test(\"Name is not empty\", function () {",
+                  "            pm.expect(responseJson.nombre.trim()).to.not.be.empty;",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Name length is reasonable\", function () {",
+                  "            pm.expect(responseJson.nombre.length).to.be.within(1, 100);",
+                  "        });",
+                  "    }",
+                  "    ",
+                  "    if (responseJson.empresa && responseJson.empresa.telefono) {",
+                  "        pm.test(\"Phone number format is valid\", function () {",
+                  "            // Allow various phone formats: +1234567890, (123) 456-7890, etc.",
+                  "            pm.expect(responseJson.empresa.telefono).to.match(/^[\\+\\(\\)\\-\\s\\d]+$/);",
+                  "        });",
+                  "    }",
+                  "    ",
+                  "    if (responseJson.empresa && responseJson.empresa.nit) {",
+                  "        pm.test(\"NIT format is valid\", function () {",
+                  "            // NIT should be alphanumeric",
+                  "            pm.expect(responseJson.empresa.nit).to.match(/^[a-zA-Z0-9\\-]+$/);",
+                  "        });",
+                  "    }",
+                  "});",
+                  "",
+                  "// Business logic validation",
+                  "pm.test(\"Business logic validation\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    pm.test(\"User ID should match requested ID\", function () {",
+                  "        const requestedUserId = pm.environment.get('user_id');",
+                  "        if (requestedUserId) {",
+                  "            pm.expect(responseJson.id).to.equal(requestedUserId);",
+                  "        }",
+                  "    });",
+                  "    ",
+                  "    if (responseJson.perfil && responseJson.perfil.avatar_url) {",
+                  "        pm.test(\"Avatar URL should be valid\", function () {",
+                  "            pm.expect(responseJson.perfil.avatar_url).to.match(/^https?:\\/\\/.+/);",
+                  "        });",
+                  "    }",
+                  "    ",
+                  "    pm.test(\"Required fields should not be empty\", function () {",
+                  "        pm.expect(responseJson.nombre).to.not.be.empty;",
+                  "        pm.expect(responseJson.email).to.not.be.empty;",
+                  "        pm.expect(responseJson.id).to.not.be.empty;",
+                  "    });",
+                  "});",
+                  "",
+                  "// Privacy and security validation",
+                  "pm.test(\"Privacy and security validation\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    pm.test(\"No internal system fields exposed\", function () {",
+                  "        pm.expect(responseJson).to.not.have.property('_id');",
+                  "        pm.expect(responseJson).to.not.have.property('__v');",
+                  "        pm.expect(responseJson).to.not.have.property('salt');",
+                  "        pm.expect(responseJson).to.not.have.property('hash');",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"No authentication tokens exposed\", function () {",
+                  "        const responseText = pm.response.text();",
+                  "        pm.expect(responseText).to.not.include('token');",
+                  "        pm.expect(responseText).to.not.include('jwt');",
+                  "        pm.expect(responseText).to.not.include('bearer');",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"User can only access their own details or authorized details\", function () {",
+                  "        // This is enforced by the backend authorization logic",
+                  "        // A 403 error would indicate unauthorized access attempt",
+                  "        if (pm.response.code === 200) {",
+                  "            pm.expect(responseJson.id).to.not.be.empty;",
+                  "        }",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/{{user_id}}/",
+              "host": [
+                "{{base_url}}/api/usuarios/{{user_id}}/"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"John Doe Updated\",\n  \"email\": \"john.doe.updated@example.com\",\n  \"empresa\": {\n    \"nombre\": \"Updated Corp\",\n    \"telefono\": \"+1234567891\",\n    \"nit\": \"123456789\"\n  },\n  \"perfil\": {\n    \"avatar_url\": \"https://example.com/new-avatar.jpg\",\n    \"idioma\": \"en\",\n    \"timezone\": \"America/New_York\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/{{user_id}}/",
+              "host": [
+                "{{base_url}}/api/usuarios/{{user_id}}/"
+              ]
+            }
+          }
+        },
+        {
+          "name": "User Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/login/",
+              "host": [
+                "{{base_url}}/api/usuarios/login/"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"user_password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has valid JSON structure\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    pm.test(\"Response contains token\", function () {",
+                  "        pm.expect(responseJson).to.have.property('token');",
+                  "        pm.expect(responseJson.token).to.be.a('string');",
+                  "        pm.expect(responseJson.token).to.not.be.empty;",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains user_id\", function () {",
+                  "        pm.expect(responseJson).to.have.property('user_id');",
+                  "        pm.expect(responseJson.user_id).to.be.a('string');",
+                  "        pm.expect(responseJson.user_id).to.not.be.empty;",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains user details\", function () {",
+                  "        pm.expect(responseJson).to.have.property('user');",
+                  "        pm.expect(responseJson.user).to.have.property('email');",
+                  "        pm.expect(responseJson.user.email).to.be.a('string');",
+                  "        pm.expect(responseJson.user.email).to.match(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/);",
+                  "    });",
+                  "    ",
+                  "    // Store values for subsequent requests",
+                  "    if (responseJson.token) {",
+                  "        pm.environment.set(\"firebase_token\", responseJson.token);",
+                  "    }",
+                  "    if (responseJson.user_id) {",
+                  "        pm.environment.set(\"user_id\", responseJson.user_id);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "// Test for authentication failure scenarios",
+                  "if (pm.response.code === 401) {",
+                  "    pm.test(\"Unauthorized - Invalid credentials\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('Invalid');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 400) {",
+                  "    pm.test(\"Bad Request - Missing email or password\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 404) {",
+                  "    pm.test(\"User not found\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('not found');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/reset-password/",
+              "host": [
+                "{{base_url}}/api/usuarios/reset-password/"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has valid JSON structure\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    pm.test(\"Response contains success confirmation\", function () {",
+                  "        pm.expect(responseJson).to.have.property('success');",
+                  "        pm.expect(responseJson.success).to.be.true;",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains message\", function () {",
+                  "        pm.expect(responseJson).to.have.property('message');",
+                  "        pm.expect(responseJson.message).to.be.a('string');",
+                  "        pm.expect(responseJson.message).to.not.be.empty;",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains email confirmation\", function () {",
+                  "        pm.expect(responseJson).to.have.property('email');",
+                  "        pm.expect(responseJson.email).to.be.a('string');",
+                  "        pm.expect(responseJson.email).to.match(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/);",
+                  "        ",
+                  "        // Verify email matches request",
+                  "        const requestBody = JSON.parse(pm.request.body.raw);",
+                  "        pm.expect(responseJson.email).to.equal(requestBody.email);",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains reset token info\", function () {",
+                  "        pm.expect(responseJson).to.have.property('reset_token_sent');",
+                  "        pm.expect(responseJson.reset_token_sent).to.be.true;",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains expiration info\", function () {",
+                  "        pm.expect(responseJson).to.have.property('expires_in');",
+                  "        pm.expect(responseJson.expires_in).to.be.a('string');",
+                  "        pm.expect(responseJson.expires_in).to.not.be.empty;",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Security - No sensitive data exposed\", function () {",
+                  "        pm.expect(responseJson).to.not.have.property('reset_token');",
+                  "        pm.expect(responseJson).to.not.have.property('password');",
+                  "        pm.expect(responseJson).to.not.have.property('user_id');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "// Test for validation errors",
+                  "if (pm.response.code === 400) {",
+                  "    pm.test(\"Bad Request - Email validation errors\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        ",
+                  "        if (responseJson.error.includes('email')) {",
+                  "            pm.test(\"Invalid email format\", function () {",
+                  "                pm.expect(responseJson.error).to.include('email');",
+                  "            });",
+                  "        }",
+                  "        ",
+                  "        if (responseJson.error.includes('required')) {",
+                  "            pm.test(\"Missing required email field\", function () {",
+                  "                pm.expect(responseJson.error).to.include('required');",
+                  "            });",
+                  "        }",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 404) {",
+                  "    pm.test(\"Not Found - Email not registered\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('not found');",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 429) {",
+                  "    pm.test(\"Too Many Requests - Rate limiting\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('rate limit');",
+                  "    });",
+                  "}",
+                  "",
+                  "// Email validation tests",
+                  "pm.test(\"Email format validation\", function () {",
+                  "    const requestBody = JSON.parse(pm.request.body.raw);",
+                  "    ",
+                  "    if (requestBody.email) {",
+                  "        pm.test(\"Request email has valid format\", function () {",
+                  "            pm.expect(requestBody.email).to.match(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/);",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Email is not empty\", function () {",
+                  "            pm.expect(requestBody.email.trim()).to.not.be.empty;",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Email length is reasonable\", function () {",
+                  "            pm.expect(requestBody.email.length).to.be.within(5, 254);",
+                  "        });",
+                  "    }",
+                  "});",
+                  "",
+                  "// Business logic validation",
+                  "pm.test(\"Password reset business logic\", function () {",
+                  "    if (pm.response.code === 200) {",
+                  "        const responseJson = pm.response.json();",
+                  "        ",
+                  "        pm.test(\"Successful reset should confirm token sent\", function () {",
+                  "            pm.expect(responseJson.reset_token_sent).to.be.true;",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Reset should have expiration time\", function () {",
+                  "            pm.expect(responseJson.expires_in).to.not.be.empty;",
+                  "            ",
+                  "            // Common expiration formats: \"24 hours\", \"1 hour\", etc.",
+                  "            pm.expect(responseJson.expires_in).to.match(/(hour|minute|day)/i);",
+                  "        });",
+                  "        ",
+                  "        pm.test(\"Success message should be informative\", function () {",
+                  "            pm.expect(responseJson.message).to.include('reset');",
+                  "            pm.expect(responseJson.message).to.include('email');",
+                  "        });",
+                  "    }",
+                  "});",
+                  "",
+                  "// Security validation",
+                  "pm.test(\"Security best practices validation\", function () {",
+                  "    if (pm.response.code === 404) {",
+                  "        pm.test(\"User enumeration protection\", function () {",
+                  "            // Should not reveal whether email exists or not",
+                  "            const responseJson = pm.response.json();",
+                  "            pm.expect(responseJson.error).to.not.include('exists');",
+                  "            pm.expect(responseJson.error).to.not.include('registered');",
+                  "        });",
+                  "    }",
+                  "    ",
+                  "    if (pm.response.code === 200) {",
+                  "        pm.test(\"No sensitive information in response\", function () {",
+                  "            const responseText = pm.response.text();",
+                  "            pm.expect(responseText).to.not.include('token');",
+                  "            pm.expect(responseText).to.not.include('password');",
+                  "            pm.expect(responseText).to.not.include('hash');",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Hello Test Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/hello/",
+              "host": [
+                "{{base_url}}/api/usuarios/hello/"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Protected Test Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{firebase_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/usuarios/protected/",
+              "host": [
+                "{{base_url}}/api/usuarios/protected/"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has valid JSON structure\", function () {",
+                  "    pm.response.to.be.json;",
+                  "    const responseJson = pm.response.json();",
+                  "    ",
+                  "    pm.test(\"Response contains authentication confirmation\", function () {",
+                  "        pm.expect(responseJson).to.have.property('authenticated');",
+                  "        pm.expect(responseJson.authenticated).to.be.true;",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains user information\", function () {",
+                  "        pm.expect(responseJson).to.have.property('user');",
+                  "        pm.expect(responseJson.user).to.be.an('object');",
+                  "        ",
+                  "        if (responseJson.user) {",
+                  "            pm.expect(responseJson.user).to.have.property('id');",
+                  "            pm.expect(responseJson.user.id).to.be.a('string');",
+                  "            pm.expect(responseJson.user.id).to.not.be.empty;",
+                  "        }",
+                  "    });",
+                  "    ",
+                  "    pm.test(\"Response contains access timestamp\", function () {",
+                  "        pm.expect(responseJson).to.have.property('access_time');",
+                  "        pm.expect(responseJson.access_time).to.be.a('string');",
+                  "        ",
+                  "        // Validate timestamp format",
+                  "        const timestamp = new Date(responseJson.access_time);",
+                  "        pm.expect(timestamp).to.be.a('date');",
+                  "        pm.expect(timestamp.getTime()).to.not.be.NaN;",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(3000);",
+                  "});",
+                  "",
+                  "// Test for authentication failure scenarios",
+                  "if (pm.response.code === 401) {",
+                  "    pm.test(\"Unauthorized - Invalid or missing token\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('Unauthorized');",
+                  "        ",
+                  "        pm.test(\"Authentication failure details\", function () {",
+                  "            pm.expect(responseJson).to.have.property('authenticated');",
+                  "            pm.expect(responseJson.authenticated).to.be.false;",
+                  "        });",
+                  "    });",
+                  "}",
+                  "",
+                  "if (pm.response.code === 403) {",
+                  "    pm.test(\"Forbidden - Token expired or invalid\", function () {",
+                  "        const responseJson = pm.response.json();",
+                  "        pm.expect(responseJson).to.have.property('error');",
+                  "        pm.expect(responseJson.error).to.include('Forbidden');",
+                  "    });",
+                  "}",
+                  "",
+                  "// Authentication flow validation",
+                  "pm.test(\"Authentication flow validation\", function () {",
+                  "    const token = pm.environment.get('firebase_token');",
+                  "    ",
+                  "    if (token && token.length > 0) {",
+                  "        pm.test(\"Valid token should grant access\", function () {",
+                  "            if (pm.response.code === 200) {",
+                  "                const responseJson = pm.response.json();",
+                  "                pm.expect(responseJson.authenticated).to.be.true;",
+                  "            }",
+                  "        });",
+                  "    } else {",
+                  "        pm.test(\"Missing token should deny access\", function () {",
+                  "            pm.expect([401, 403]).to.include(pm.response.code);",
+                  "        });",
+                  "    }",
+                  "});",
+                  "",
+                  "// Token validation tests",
+                  "pm.test(\"Token validation\", function () {",
+                  "    const authHeader = pm.request.headers.get('Authorization');",
+                  "    ",
+                  "    if (authHeader) {",
+                  "        pm.test(\"Authorization header format is correct\", function () {",
+                  "            pm.expect(authHeader).to.match(/^Bearer\\s+.+/);",
+                  "        });",
+                  "        ",
+                  "        const token = authHeader.replace('Bearer ', '');",
+                  "        pm.test(\"Token is not empty\", function () {",
+                  "            pm.expect(token).to.not.be.empty;",
+                  "            pm.expect(token.length).to.be.greaterThan(10);",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

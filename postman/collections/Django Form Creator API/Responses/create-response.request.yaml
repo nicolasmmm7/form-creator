@@ -1,0 +1,151 @@
+$kind: http-request
+name: Create Response
+method: POST
+url: '{{base_url}}/api/respuestas/'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: Accept
+    value: application/json
+  - key: Authorization
+    value: 'Bearer {{firebase_token}}'
+body:
+  type: json
+  content: |-
+    {
+      "formulario_id": "{{form_id}}",
+      "usuario_id": "{{user_id}}",
+      "respuestas": [
+        {
+          "pregunta_id": "q1",
+          "valor": "John Smith"
+        },
+        {
+          "pregunta_id": "q2",
+          "valor": "Very Satisfied"
+        },
+        {
+          "pregunta_id": "q3",
+          "valor": 9
+        },
+        {
+          "pregunta_id": "q4",
+          "valor": ["Feature A", "Feature C"]
+        }
+      ]
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 201", function () {
+          pm.response.to.have.status(201);
+      });
+      
+      pm.test("Response has valid JSON structure", function () {
+          pm.response.to.be.json;
+          const responseJson = pm.response.json();
+          
+          pm.test("Response contains response ID", function () {
+              pm.expect(responseJson).to.have.property('id');
+              pm.expect(responseJson.id).to.be.a('string');
+              pm.expect(responseJson.id).to.not.be.empty;
+          });
+          
+          pm.test("Response contains form and user references", function () {
+              pm.expect(responseJson).to.have.property('formulario_id');
+              pm.expect(responseJson).to.have.property('usuario_id');
+              pm.expect(responseJson.formulario_id).to.be.a('string');
+              pm.expect(responseJson.usuario_id).to.be.a('string');
+          });
+          
+          pm.test("Response contains respuestas array", function () {
+              pm.expect(responseJson).to.have.property('respuestas');
+              pm.expect(responseJson.respuestas).to.be.an('array');
+              pm.expect(responseJson.respuestas.length).to.be.greaterThan(0);
+          });
+          
+          pm.test("Respuestas have valid structure", function () {
+              responseJson.respuestas.forEach((respuesta, index) => {
+                  pm.expect(respuesta).to.have.property('pregunta_id');
+                  pm.expect(respuesta).to.have.property('valor');
+                  pm.expect(respuesta.pregunta_id).to.be.a('string');
+                  pm.expect(respuesta.pregunta_id).to.not.be.empty;
+              });
+          });
+          
+          pm.test("Response has submission timestamp", function () {
+              pm.expect(responseJson).to.have.property('fecha_envio');
+              pm.expect(responseJson.fecha_envio).to.be.a('string');
+              
+              // Validate timestamp format (ISO 8601)
+              const timestamp = new Date(responseJson.fecha_envio);
+              pm.expect(timestamp).to.be.a('date');
+              pm.expect(timestamp.getTime()).to.not.be.NaN;
+          });
+          
+          pm.test("Response data integrity check", function () {
+              const requestBody = JSON.parse(pm.request.body.raw);
+              
+              // Verify form and user IDs match
+              pm.expect(responseJson.formulario_id).to.equal(requestBody.formulario_id);
+              pm.expect(responseJson.usuario_id).to.equal(requestBody.usuario_id);
+              
+              // Verify response count matches request
+              pm.expect(responseJson.respuestas.length).to.equal(requestBody.respuestas.length);
+          });
+          
+          // Store response ID for subsequent requests
+          if (responseJson.id) {
+              pm.environment.set("response_id", responseJson.id);
+          }
+      });
+      
+      pm.test("Response time is acceptable", function () {
+          pm.expect(pm.response.responseTime).to.be.below(5000);
+      });
+      
+      // Test for validation errors
+      if (pm.response.code === 400) {
+          pm.test("Bad Request - Validation errors", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              
+              // Check for specific validation error types
+              if (responseJson.error.includes('required')) {
+                  pm.test("Missing required fields", function () {
+                      pm.expect(responseJson.error).to.include('required');
+                  });
+              }
+              
+              if (responseJson.error.includes('invalid')) {
+                  pm.test("Invalid data format", function () {
+                      pm.expect(responseJson.error).to.include('invalid');
+                  });
+              }
+          });
+      }
+      
+      if (pm.response.code === 401) {
+          pm.test("Unauthorized - Invalid or missing token", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+          });
+      }
+      
+      if (pm.response.code === 403) {
+          pm.test("Forbidden - No access to form", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('access');
+          });
+      }
+      
+      if (pm.response.code === 404) {
+          pm.test("Not Found - Form or user not found", function () {
+              const responseJson = pm.response.json();
+              pm.expect(responseJson).to.have.property('error');
+              pm.expect(responseJson.error).to.include('not found');
+          });
+      }
+    language: text/javascript
