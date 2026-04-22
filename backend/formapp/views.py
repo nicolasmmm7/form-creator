@@ -23,7 +23,10 @@ class FormularioListCreateAPI(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        serializer = FormularioSerializer(data=request.data)
+        data = request.data.copy()
+        data["administrador"] = str(request.user.id)  # 👈 clave
+
+        serializer = FormularioSerializer(data=data)
         if serializer.is_valid():
             formulario = serializer.save()
             return Response({
