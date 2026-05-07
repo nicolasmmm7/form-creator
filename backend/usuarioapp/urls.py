@@ -7,6 +7,7 @@ from usuarioapp.views import (
     protected_view,
     UsuarioLoginAPI,
     ResetPasswordAPI,
+    EmailVerificationAPI,
     firebase_auth_sync)
 from . import views
 
@@ -19,10 +20,9 @@ urlpatterns = [
     #path('auth/firebase/', views.firebase_auth_sync, name='firebase_auth_sync'),
     path('login/', UsuarioLoginAPI.as_view(), name='usuarios_login'),  # 👈 esta va antes de la que usa <str:id>
     path('reset-password/', ResetPasswordAPI.as_view(), name='reset-password'), # 👈 endpoint para resetear contraseña
+    path('verify-email/', EmailVerificationAPI.as_view(), name='verify-email'), # 👈 endpoint para verificar email
     path('', UsuarioListCreateAPI.as_view(), name='usuarios_list_create'),
     path('<str:id>/', UsuarioDetailAPI.as_view(), name='usuarios_detail'),
 
-    
-    
    
-]
+]
