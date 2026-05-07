@@ -21,6 +21,7 @@ class UsuarioSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     clave_hash = serializers.CharField(required=False)
     fecha_registro = serializers.DateTimeField(read_only=True)
+    email_verificado = serializers.BooleanField(read_only=True, default=False)
     empresa = EmpresaSerializer(required=False)
     perfil = PerfilSerializer(required=False)
 

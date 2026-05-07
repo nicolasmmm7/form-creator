@@ -4,6 +4,7 @@ import Register from "./pages/register";
 import Home from "./pages/home";
 import CreateForm from "./pages/CreateForm";
 import PasswordReset from "./pages/password-reset";
+import VerifyEmail from "./pages/verify-email";
 import ProfilePage from "./pages/ProfilePage";
 import AnswerForm from "./pages/AnswerForm";
 import ThankYou from "./pages/ThankYou";
@@ -15,6 +16,7 @@ import "./css/Auth.css";
 import "./css/Home.css"
 import "./css/CreateForm.css"
 import "./css/password.css"
+import "./css/VerifyEmail.css"
 
 
 function App() {
@@ -28,6 +30,7 @@ function App() {
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
 
         <Route path="/home" element={<Home />} />
         <Route path="/create/:formId?" element={<CreateForm />} />
