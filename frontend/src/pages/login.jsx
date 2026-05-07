@@ -51,6 +51,10 @@ const Login = () => {
         localStorage.setItem("signin_provider", "normal");
 
         navigate(next);
+      } else if (result.data.codigo === "EMAIL_NO_VERIFICADO") {
+        // Redirigir a verificación de email
+        alert("⚠️ " + result.data.error);
+        navigate("/verify-email", { state: { email: result.data.email } });
       } else {
         alert("❌ Error: " + (result.data.error || "Credenciales incorrectas"));
       }

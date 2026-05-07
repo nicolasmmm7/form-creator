@@ -1,0 +1,189 @@
+/* Archivo: VerifyEmail.css */
+
+.verify-email-container {
+  background: #f2fcfa;
+  border-radius: 2rem;
+  box-shadow: 0 8px 24px rgba(44,62,80,0.13);
+  max-width: 420px;
+  margin: 6rem auto 0 auto;
+  padding: 2.7rem 2.5rem 2rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Poppins', Arial, sans-serif;
+}
+
+.verify-email-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.verify-email-container h2 {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #333c3a;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.verify-email-desc {
+  color: #556b6a;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.verify-email-desc strong {
+  color: #4C9A92;
+}
+
+.verify-email-container input {
+  width: 100%;
+  padding: 1rem;
+  margin-bottom: 1.2rem;
+  border-radius: 0.7rem;
+  border: 1px solid #c8e6e2;
+  font-size: 1.8rem;
+  text-align: center;
+  letter-spacing: 8px;
+  font-weight: 700;
+  color: #4C9A92;
+  outline: none;
+  transition: border 0.25s;
+}
+
+.verify-email-container input::placeholder {
+  font-size: 1rem;
+  letter-spacing: 0;
+  font-weight: 400;
+  color: #a0b5b2;
+}
+
+.verify-email-container input:focus {
+  border: 1.5px solid #80cbc4;
+  box-shadow: 0 0 8px rgba(76,154,146,0.2);
+}
+
+#verify-email-btn-submit {
+  width: 100%;
+  padding: 1rem 0;
+  border: none;
+  border-radius: 0.8rem;
+  background-color: #57bfa6;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-bottom: 0.9rem;
+  transition: background 0.22s, transform 0.15s;
+}
+
+#verify-email-btn-submit:hover:not(:disabled) {
+  background: #45a094;
+  transform: translateY(-1px);
+}
+
+#verify-email-btn-submit:disabled {
+  background: #b0d8d0;
+  cursor: not-allowed;
+}
+
+.verify-email-resend {
+  width: auto;
+  color: #4C9A92;
+  text-align: center;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  border: none;
+  background: none;
+  transition: color 0.20s;
+  padding: 0;
+  font-weight: 500;
+}
+
+.verify-email-resend:hover {
+  color: #2E8B7D;
+  text-decoration: underline;
+  background: none;
+}
+
+.verify-email-back {
+  width: auto;
+  color: #ee9999;
+  text-align: center;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  border: none;
+  background: none;
+  transition: color 0.20s;
+  padding: 0;
+  font-weight: 400;
+}
+
+.verify-email-back:hover {
+  color: #e57373;
+  text-decoration: underline;
+  background: none;
+}
+
+/* === Mensajes de estado === */
+.verify-email-error {
+  background: #fff0f0;
+  color: #d32f2f;
+  border: 1px solid #f5c6cb;
+  border-radius: 0.5rem;
+  padding: 0.7rem 1rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.verify-email-success {
+  background: #e8f9f0;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+  border-radius: 0.5rem;
+  padding: 0.7rem 1rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* === Responsive === */
+@media (max-width: 490px) {
+  .verify-email-container {
+    max-width: 95vw;
+    padding: 1.5rem;
+  }
+
+  .verify-email-container h2 {
+    font-size: 1.4rem;
+  }
+
+  .verify-email-container input {
+    font-size: 1.4rem;
+    letter-spacing: 6px;
+  }
+}
+
+/* === Fondo fijo (heredado del sistema de diseño) === */
+body {
+  position: relative;
+  background: transparent;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--color-fondo);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+}
