@@ -62,9 +62,10 @@ const Register = () => {
       const data = await registrarUsuario(nuevoUsuario);
 
       if (data.id) {
-        alert(`✅ Usuario creado con Exito`);
+        alert(`✅ ${data.message || "Se envió un código de verificación a tu correo."}`);
         console.log("Usuario creado:", data);
-        navigate("/login");
+        // Redirigir a la página de verificación de email
+        navigate("/verify-email", { state: { email: formData.correo } });
       } else {
         console.error("❌ Error del backend:", data);
         alert("Error al registrar usuario. Revisa la consola.");

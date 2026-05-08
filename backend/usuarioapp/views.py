@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
-from usuarioapp.models import Usuario, Empresa, Perfil, ResetPasswordToken
+from usuarioapp.models import Usuario, Empresa, Perfil, ResetPasswordToken, EmailVerificationToken
 from usuarioapp.serializers import UsuarioSerializer
 from bson import ObjectId
 from rest_framework.permissions import IsAuthenticated
@@ -14,7 +14,7 @@ from django.http import HttpResponse
 from django.conf import settings
 import random, string
 from django.core.mail import send_mail
-from utils.email_utils import send_otp_email
+from utils.email_utils import send_otp_email, send_verification_email
 from django.core.cache import cache  # para guardar temporalmente el OTP
 
 def hello(request):
@@ -283,9 +283,22 @@ class UsuarioListCreateAPI(APIView):
         serializer = UsuarioSerializer(data=request.data)
         if serializer.is_valid():
             usuario = serializer.save()
+
+            # === Generar y enviar OTP de verificación de email ===
+            otp_code = ''.join(random.choices(string.digits, k=6))
+            EmailVerificationToken.objects(email=usuario.email).delete()  # borrar tokens anteriores
+            expires_at = datetime.utcnow() + timedelta(minutes=10)
+            EmailVerificationToken(email=usuario.email, token=otp_code, expires_at=expires_at).save()
+
+            enviado = send_verification_email(usuario.email, otp_code)
+            if not enviado:
+                print(f"⚠️ No se pudo enviar correo de verificación a {usuario.email}, pero el usuario fue creado.")
+
             return Response({
-                "message": "Usuario creado correctamente",
-                "id": str(usuario.id)
+                "message": "Usuario creado. Se envió un código de verificación a tu correo.",
+                "id": str(usuario.id),
+                "email": usuario.email,
+                "requiere_verificacion": True
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -307,11 +320,98 @@ class UsuarioLoginAPI(APIView):
         if not usuario:
             return Response({"error": "Credenciales incorrectas"}, status=status.HTTP_401_UNAUTHORIZED)
 
+        # === Bloquear login si el email no está verificado ===
+        # Nota: usuarios antiguos no tienen el campo email_verificado en MongoDB,
+        # por lo que solo bloqueamos si el campo EXISTE y es False (usuarios nuevos).
+        raw_doc = usuario.to_mongo()
+        if 'email_verificado' in raw_doc and not raw_doc['email_verificado']:
+            return Response({
+                "error": "Tu correo electrónico no ha sido verificado. Revisa tu bandeja de entrada.",
+                "codigo": "EMAIL_NO_VERIFICADO",
+                "email": usuario.email
+            }, status=status.HTTP_403_FORBIDDEN)
+
         serializer = UsuarioSerializer(usuario)
         return Response({
             "message": "Inicio de sesión exitoso",
             "usuario": serializer.data
         }, status=status.HTTP_200_OK)
+
+
+# ==========================================
+# ENDPOINT: Verificación de email por OTP (POST)
+# ==========================================
+class EmailVerificationAPI(APIView):
+    """
+    Flujo de verificación de correo al registrarse:
+    1. POST con action="verificar"  -> verifica el código OTP y activa la cuenta
+    2. POST con action="reenviar"   -> reenvía un nuevo código OTP al correo
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        action = request.data.get("action")
+
+        # --- 1️⃣ Verificar código OTP ---
+        if action == "verificar":
+            email = request.data.get("email")
+            token = request.data.get("token")
+
+            if not email or not token:
+                return Response({"error": "Email y código son requeridos."}, status=400)
+
+            # Buscar token
+            token_doc = EmailVerificationToken.objects(email=email, token=token).first()
+            if not token_doc:
+                return Response({"error": "Código inválido."}, status=400)
+
+            # Verificar expiración
+            if token_doc.expires_at < datetime.utcnow():
+                token_doc.delete()
+                return Response({"error": "El código ha expirado. Solicita uno nuevo."}, status=400)
+
+            # Marcar email como verificado
+            usuario = Usuario.objects(email=email).first()
+            if not usuario:
+                return Response({"error": "Usuario no encontrado."}, status=404)
+
+            usuario.email_verificado = True
+            usuario.save()
+
+            # Eliminar token usado
+            token_doc.delete()
+
+            return Response({"message": "¡Correo verificado exitosamente! Ya puedes iniciar sesión."}, status=200)
+
+        # --- 2️⃣ Reenviar código ---
+        elif action == "reenviar":
+            email = request.data.get("email")
+
+            if not email:
+                return Response({"error": "Debe ingresar un correo."}, status=400)
+
+            usuario = Usuario.objects(email=email).first()
+            if not usuario:
+                return Response({"error": "No existe un usuario con ese correo."}, status=404)
+
+            if usuario.email_verificado:
+                return Response({"message": "Este correo ya está verificado."}, status=200)
+
+            # Generar nuevo token
+            otp_code = ''.join(random.choices(string.digits, k=6))
+            EmailVerificationToken.objects(email=email).delete()
+            expires_at = datetime.utcnow() + timedelta(minutes=10)
+            EmailVerificationToken(email=email, token=otp_code, expires_at=expires_at).save()
+
+            enviado = send_verification_email(email, otp_code)
+            if not enviado:
+                EmailVerificationToken.objects(email=email).delete()
+                return Response({"error": "No se pudo enviar el correo. Intenta más tarde."}, status=500)
+
+            return Response({"message": "Nuevo código enviado al correo."}, status=200)
+
+        else:
+            return Response({"error": "Acción no válida."}, status=400)
 
 # ==========================================
 # ENDPOINT: Detalle de usuario (GET/PUT/DELETE)

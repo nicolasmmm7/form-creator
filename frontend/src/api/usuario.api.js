@@ -241,3 +241,39 @@ export const updateUserData = async (userId, updateData, idToken = null) => {
 };
 
 
+/**
+ * 📧 Verificación de email (flujo de dos acciones)
+ * 1️⃣ verificarEmail(email, codigo) -> verifica el código OTP y activa la cuenta
+ * 2️⃣ reenviarCodigoVerificacion(email) -> reenvía un nuevo código OTP al correo
+ */
+export const verificarEmail = async (email, token) => {
+  try {
+    const response = await fetch(`${API_URL}/usuarios/verify-email/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "verificar", email, token }),
+    });
+
+    const data = await response.json();
+    return { ok: response.ok, data };
+  } catch (error) {
+    console.error("❌ Error al verificar email:", error);
+    return { ok: false, data: { error: "Error al conectar con el servidor" } };
+  }
+};
+
+export const reenviarCodigoVerificacion = async (email) => {
+  try {
+    const response = await fetch(`${API_URL}/usuarios/verify-email/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "reenviar", email }),
+    });
+
+    const data = await response.json();
+    return { ok: response.ok, data };
+  } catch (error) {
+    console.error("❌ Error al reenviar código:", error);
+    return { ok: false, data: { error: "Error al conectar con el servidor" } };
+  }
+};
