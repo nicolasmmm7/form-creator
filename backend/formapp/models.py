@@ -84,6 +84,9 @@ class Formulario(Document):
     configuracion = EmbeddedDocumentField(ConfiguracionFormulario)
     preguntas = ListField(EmbeddedDocumentField(Pregunta))
 
+    eliminado = BooleanField(default=False)
+    fecha_eliminacion = DateTimeField()
+
     meta = {
         'collection': 'formularios'
     }
