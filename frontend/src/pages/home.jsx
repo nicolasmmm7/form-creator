@@ -209,6 +209,16 @@ const Home = () => {
     return "PUBLICADO";
   };
 
+  const calcularDiasRestantes = (fechaEliminacion) => {
+    if (!fechaEliminacion) return 30;
+    const fecha = new Date(fechaEliminacion);
+    const limite = new Date(fecha.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const hoy = new Date();
+    const difTiempo = limite.getTime() - hoy.getTime();
+    const difDias = Math.ceil(difTiempo / (1000 * 3600 * 24));
+    return difDias > 0 ? difDias : 0;
+  };
+
 
 
 
@@ -310,10 +320,12 @@ const Home = () => {
       </header>
 
       {/* Botones de acción general */}
-      <div className="home-actions-bar" style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 2rem', marginTop: '1rem' }}>
+      <div className="home-actions-bar" style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 5%', marginBottom: '1.5rem', marginTop: '-0.5rem' }}>
         <button 
           onClick={() => setMostrarPapelera(!mostrarPapelera)}
-          style={{ padding: '8px 16px', background: '#4f46e5', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' }}
+          style={{ padding: '8px 16px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', transition: 'background 0.2s' }}
+          onMouseOver={(e) => e.target.style.background = '#dc2626'}
+          onMouseOut={(e) => e.target.style.background = '#ef4444'}
         >
           {mostrarPapelera ? "⬅️ Volver a Mis Formularios" : "🗑️ Ver Papelera"}
         </button>
@@ -440,6 +452,11 @@ const Home = () => {
                 {/* Info adicional */}
                 <p className="home-card-info">
                   {form.preguntas?.length || 0} preguntas
+                  {mostrarPapelera && form.fecha_eliminacion && (
+                    <span style={{ display: 'block', color: '#ef4444', fontSize: '0.85rem', marginTop: '6px', fontWeight: '500' }}>
+                      ⏳ Se eliminará en {calcularDiasRestantes(form.fecha_eliminacion)} días
+                    </span>
+                  )}
                 </p>
 
                 {/* Botón Publicar / Despublicar (solo si no está en papelera) */}
