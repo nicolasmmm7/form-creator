@@ -67,6 +67,8 @@ class FormularioDetailAPI(APIView):
             return Response({"error": "Formulario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
         formulario.eliminado = True
         formulario.fecha_eliminacion = datetime.utcnow()
+        if formulario.configuracion:
+            formulario.configuracion.privado = True
         formulario.save()
         return Response({"message": "Formulario eliminado lógicamente"}, status=status.HTTP_204_NO_CONTENT)
 
