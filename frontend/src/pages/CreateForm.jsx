@@ -546,88 +546,84 @@ export default function CreateForm() {
         </label>
 
         {/* 🆕 NUEVA SECCIÓN: Visibilidad del formulario */}
-        {config.requerir_login && (
-          <>
-            <label className="create-config-label">
-              Formulario público:
-              <input
-                className="create-checkbox"
-                type="checkbox"
-                checked={config.es_publico}
-                onChange={(e) => {
-                  setConfig({
-                    ...config,
-                    es_publico: e.target.checked,
-                    // Si se marca como público, limpiar la lista de usuarios
-                    usuarios_autorizados: e.target.checked ? [] : config.usuarios_autorizados
-                  });
-                  setEmailInput("");
-                  setEmailError("");
-                }}
-              />
+        <label className="create-config-label">
+          Formulario público:
+          <input
+            className="create-checkbox"
+            type="checkbox"
+            checked={config.es_publico}
+            onChange={(e) => {
+              setConfig({
+                ...config,
+                es_publico: e.target.checked,
+                // Si se marca como público, limpiar la lista de usuarios
+                usuarios_autorizados: e.target.checked ? [] : config.usuarios_autorizados
+              });
+              setEmailInput("");
+              setEmailError("");
+            }}
+          />
+        </label>
+
+        {/* Mostrar gestión de usuarios solo si es PRIVADO */}
+        {!config.es_publico && (
+          <div className="create-usuarios-section">
+            <label className="create-config-label" style={{ marginTop: 15, marginBottom: 8 }}>
+              Usuarios autorizados:
             </label>
 
-            {/* Mostrar gestión de usuarios solo si es PRIVADO */}
-            {!config.es_publico && (
-              <div className="create-usuarios-section">
-                <label className="create-config-label" style={{ marginTop: 15, marginBottom: 8 }}>
-                  Usuarios autorizados:
-                </label>
+            {/* Input para agregar email */}
+            <div className="create-email-input-container">
+              <input
+                className="create-input"
+                type="email"
+                placeholder="email@ejemplo.com"
+                value={emailInput}
+                onChange={(e) => {
+                  setEmailInput(e.target.value);
+                  setEmailError(""); // Limpiar error al escribir
+                }}
+                onKeyPress={handleEmailKeyPress}
+                style={{ marginBottom: 5 }}
+              />
+              <button
+                className="create-btn-add-email"
+                type="button"
+                onClick={agregarUsuario}
+                title="Agregar usuario"
+              >
+                +
+              </button>
+            </div>
 
-                {/* Input para agregar email */}
-                <div className="create-email-input-container">
-                  <input
-                    className="create-input"
-                    type="email"
-                    placeholder="email@ejemplo.com"
-                    value={emailInput}
-                    onChange={(e) => {
-                      setEmailInput(e.target.value);
-                      setEmailError(""); // Limpiar error al escribir
-                    }}
-                    onKeyPress={handleEmailKeyPress}
-                    style={{ marginBottom: 5 }}
-                  />
-                  <button
-                    className="create-btn-add-email"
-                    type="button"
-                    onClick={agregarUsuario}
-                    title="Agregar usuario"
-                  >
-                    +
-                  </button>
-                </div>
-
-                {/* Mensaje de error */}
-                {emailError && (
-                  <p className="create-email-error">{emailError}</p>
-                )}
-
-                {/* Lista de usuarios autorizados */}
-                <div className="create-usuarios-lista">
-                  {config.usuarios_autorizados.length === 0 ? (
-                    <p className="create-usuarios-empty">
-                      No hay usuarios autorizados aún
-                    </p>
-                  ) : (
-                    config.usuarios_autorizados.map((email, idx) => (
-                      <div key={idx} className="create-usuario-item">
-                        <span className="create-usuario-email">• {email}</span>
-                        <button
-                          className="create-btn-remove-email"
-                          type="button"
-                          onClick={() => removerUsuario(email)}
-                          title="Remover usuario"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+            {/* Mensaje de error */}
+            {emailError && (
+              <p className="create-email-error">{emailError}</p>
             )}
-          </>
+
+            {/* Lista de usuarios autorizados */}
+            <div className="create-usuarios-lista">
+              {config.usuarios_autorizados.length === 0 ? (
+                <p className="create-usuarios-empty">
+                  No hay usuarios autorizados aún
+                </p>
+              ) : (
+                config.usuarios_autorizados.map((email, idx) => (
+                  <div key={idx} className="create-usuario-item">
+                    <span className="create-usuario-email">• {email}</span>
+                    <button
+                      className="create-btn-remove-email"
+                      type="button"
+                      onClick={() => removerUsuario(email)}
+                      title="Remover usuario"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         )}
 
 
