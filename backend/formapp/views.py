@@ -6,6 +6,7 @@ from formapp.models import Formulario, ConfiguracionFormulario
 from formapp.serializers import FormularioSerializer
 from utils.email_utils import send_form_invitation
 from mongoengine.errors import DoesNotExist
+from datetime import datetime, timedelta
 
 
 class FormularioListCreateAPI(APIView):
@@ -15,9 +16,9 @@ class FormularioListCreateAPI(APIView):
     def get(self, request):
         admin_id = request.GET.get("admin")  # ?admin=<id_usuario>
         if admin_id:
-            formularios = Formulario.objects(administrador=admin_id)
+            formularios = Formulario.objects(administrador=admin_id, eliminado__ne=True)
         else:
-            formularios = Formulario.objects()
+            formularios = Formulario.objects(eliminado__ne=True)
 
         serializer = FormularioSerializer(formularios, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -64,8 +65,10 @@ class FormularioDetailAPI(APIView):
         formulario = self.get_object(id)
         if not formulario:
             return Response({"error": "Formulario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
-        formulario.delete()
-        return Response({"message": "Formulario eliminado"}, status=status.HTTP_204_NO_CONTENT)
+        formulario.eliminado = True
+        formulario.fecha_eliminacion = datetime.utcnow()
+        formulario.save()
+        return Response({"message": "Formulario eliminado lógicamente"}, status=status.HTTP_204_NO_CONTENT)
 
 
 class FormularioAccesoAPI(APIView):
@@ -383,3 +386,55 @@ class EnviarInvitacionesAPI(APIView):
                 {"error": f"Error interno: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class FormularioPapeleraAPI(APIView):
+    """GET: Listar formularios en papelera para un administrador"""
+    
+    def get(self, request):
+        admin_id = request.GET.get("admin")
+        if not admin_id:
+            return Response({"error": "Se requiere el parámetro admin"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Lógica de eliminación automática (30 días)
+        limite_dias = datetime.utcnow() - timedelta(days=30)
+        
+        # Eliminar definitivamente los que pasaron de 30 días
+        viejos = Formulario.objects(administrador=admin_id, eliminado=True, fecha_eliminacion__lte=limite_dias)
+        if viejos:
+            viejos.delete()
+            
+        # Obtener los restantes en papelera
+        formularios = Formulario.objects(administrador=admin_id, eliminado=True)
+        serializer = FormularioSerializer(formularios, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class FormularioRestaurarAPI(APIView):
+    """POST: Restaurar un formulario de la papelera"""
+    
+    def post(self, request, id):
+        try:
+            formulario = Formulario.objects.get(id=ObjectId(id), eliminado=True)
+        except Formulario.DoesNotExist:
+            return Response({"error": "Formulario no encontrado en papelera"}, status=status.HTTP_404_NOT_FOUND)
+            
+        formulario.eliminado = False
+        formulario.fecha_eliminacion = None
+        formulario.save()
+        
+        return Response({"message": "Formulario restaurado correctamente"}, status=status.HTTP_200_OK)
+
+
+class FormularioEliminarDefinitivoAPI(APIView):
+    """DELETE: Eliminar un formulario definitivamente"""
+    
+    def delete(self, request, id):
+        try:
+            formulario = Formulario.objects.get(id=ObjectId(id), eliminado=True)
+        except Formulario.DoesNotExist:
+            return Response({"error": "Formulario no encontrado en papelera"}, status=status.HTTP_404_NOT_FOUND)
+            
+        formulario.delete()
+        
+        return Response({"message": "Formulario eliminado definitivamente"}, status=status.HTTP_204_NO_CONTENT)

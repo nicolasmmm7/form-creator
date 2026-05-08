@@ -125,6 +125,8 @@ class FormularioSerializer(serializers.Serializer):
     administrador = serializers.CharField(required=True)  # lo mapearemos con Usuario manualmente
     configuracion = ConfiguracionFormularioSerializer(required=False)
     preguntas = PreguntaSerializer(many=True, required=False)
+    eliminado = serializers.BooleanField(read_only=True)
+    fecha_eliminacion = serializers.DateTimeField(read_only=True)
 
     """def validate_preguntas(self, value):
             ids = [p["id"] for p in value]
