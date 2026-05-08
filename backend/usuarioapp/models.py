@@ -42,7 +42,7 @@ class EmailVerificationToken(Document):
     """Token OTP para verificación de correo electrónico al registrarse"""
     email = StringField(required=True)
     token = StringField(required=True)
-    expires_at = DateTimeField(default=lambda: datetime.now() + timedelta(minutes=10))  # válido por 10 min
+    expires_at = DateTimeField(default=lambda: datetime.utcnow() + timedelta(minutes=10))  # válido por 10 min
 
     meta = {
         'collection': 'email_verification_tokens'

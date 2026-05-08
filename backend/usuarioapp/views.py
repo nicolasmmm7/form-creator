@@ -287,7 +287,8 @@ class UsuarioListCreateAPI(APIView):
             # === Generar y enviar OTP de verificación de email ===
             otp_code = ''.join(random.choices(string.digits, k=6))
             EmailVerificationToken.objects(email=usuario.email).delete()  # borrar tokens anteriores
-            EmailVerificationToken(email=usuario.email, token=otp_code).save()
+            expires_at = datetime.utcnow() + timedelta(minutes=10)
+            EmailVerificationToken(email=usuario.email, token=otp_code, expires_at=expires_at).save()
 
             enviado = send_verification_email(usuario.email, otp_code)
             if not enviado:
@@ -399,7 +400,8 @@ class EmailVerificationAPI(APIView):
             # Generar nuevo token
             otp_code = ''.join(random.choices(string.digits, k=6))
             EmailVerificationToken.objects(email=email).delete()
-            EmailVerificationToken(email=email, token=otp_code).save()
+            expires_at = datetime.utcnow() + timedelta(minutes=10)
+            EmailVerificationToken(email=email, token=otp_code, expires_at=expires_at).save()
 
             enviado = send_verification_email(email, otp_code)
             if not enviado:
