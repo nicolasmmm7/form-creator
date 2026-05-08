@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from mongoengine import Document, EmailField, StringField, DateTimeField, LongField, BooleanField, EmbeddedDocument, EmbeddedDocumentField
 
 class Empresa(EmbeddedDocument):
-    nombre = StringField(required=True)
+    nombre = StringField()
     telefono = LongField()
     nit = StringField()
     meta = {

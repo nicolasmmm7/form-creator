@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 
 class EmpresaSerializer(serializers.Serializer):
-    nombre = serializers.CharField(required=True)
+    nombre = serializers.CharField(required=False, allow_blank=True)
     telefono = serializers.CharField(required=False, allow_blank=True)
     nit = serializers.CharField(required=False, allow_blank=True)
 
