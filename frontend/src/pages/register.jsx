@@ -53,8 +53,10 @@ const Register = () => {
       nombre: `${formData.nombre} ${formData.apellido}`,
       email: formData.correo,
       clave_hash: formData.password,
-      celular: formData.celular,
-      empresa: { nombre: "sin_empresa" },
+      empresa: { 
+        nombre: "sin_empresa",
+        telefono: formData.celular
+      },
       perfil: { idioma: "es", timezone: "America/Bogota" },
     };
 
