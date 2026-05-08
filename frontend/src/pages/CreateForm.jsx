@@ -671,7 +671,8 @@ export default function CreateForm() {
           <input
             className="create-checkbox"
             type="checkbox"
-            checked={config.una_respuesta}
+            checked={config.una_respuesta && config.requerir_login}
+            disabled={!config.requerir_login}
             onChange={(e) =>
               setConfig({ ...config, una_respuesta: e.target.checked })
             }

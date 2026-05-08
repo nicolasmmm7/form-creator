@@ -90,6 +90,11 @@ class FormularioAccesoAPI(APIView):
                 "error": "Formulario no encontrado"
             }, status=status.HTTP_404_NOT_FOUND)
 
+        if formulario.eliminado:
+            return Response({
+                "error": "Este formulario ha sido eliminado y no acepta respuestas"
+            }, status=status.HTTP_404_NOT_FOUND)
+
         # Obtener el email del usuario desde los query params o desde Firebase auth
         email = request.GET.get('email')
         
