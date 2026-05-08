@@ -10,6 +10,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [menuAbierto, setMenuAbierto] = useState(null);
   const [user, setUser] = useState(null);
+  const [mostrarPapelera, setMostrarPapelera] = useState(false);
 
   // 🔐 Verificar autenticación y cargar usuario
   useEffect(() => {
@@ -22,8 +23,8 @@ const Home = () => {
     }
 
     setUser(userData);
-    cargarFormularios(userData.id);
-  }, [navigate]);
+    cargarFormularios(userData.id, mostrarPapelera);
+  }, [navigate, mostrarPapelera]);
 
   // 🎯 Cerrar menú al hacer clic fuera
   useEffect(() => {
@@ -38,10 +39,13 @@ const Home = () => {
   }, [menuAbierto]);
 
   // 📥 Cargar formularios del usuario
-  const cargarFormularios = async (userId) => {
+  const cargarFormularios = async (userId, isPapelera = mostrarPapelera) => {
     setLoading(true);
     try {
-      const res = await fetch(`https://form-creator-production.up.railway.app/api/formularios/?admin=${userId}`);
+      const url = isPapelera 
+        ? `https://form-creator-production.up.railway.app/api/formularios/papelera/?admin=${userId}`
+        : `https://form-creator-production.up.railway.app/api/formularios/?admin=${userId}`;
+      const res = await fetch(url);
 
       if (!res.ok) {
         throw new Error("Error al cargar formularios");
@@ -55,6 +59,40 @@ const Home = () => {
       alert("No se pudieron cargar los formularios");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ♻️ Restaurar formulario
+  const handleRestaurar = async (id, titulo) => {
+    setMenuAbierto(null);
+    try {
+      const res = await fetch(`https://form-creator-production.up.railway.app/api/formularios/${id}/restaurar/`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Error al restaurar");
+      alert("✅ Formulario restaurado correctamente");
+      cargarFormularios(user.id, mostrarPapelera);
+    } catch (error) {
+      console.error("❌ Error:", error);
+      alert("Error al restaurar el formulario");
+    }
+  };
+
+  // 💥 Eliminar definitivamente
+  const handleEliminarDefinitivo = async (id, titulo) => {
+    setMenuAbierto(null);
+    const confirmacion = window.confirm(`¿Estás seguro de eliminar DEFINITIVAMENTE el formulario "${titulo}"? Esta acción no se puede deshacer.`);
+    if (!confirmacion) return;
+    try {
+      const res = await fetch(`https://form-creator-production.up.railway.app/api/formularios/${id}/eliminar-definitivo/`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Error al eliminar");
+      alert("✅ Formulario eliminado definitivamente");
+      cargarFormularios(user.id, mostrarPapelera);
+    } catch (error) {
+      console.error("❌ Error:", error);
+      alert("Error al eliminar el formulario");
     }
   };
 
@@ -140,8 +178,8 @@ const Home = () => {
         throw new Error("Error al eliminar formulario");
       }
 
-      alert("✅ Formulario eliminado correctamente");
-      cargarFormularios(user.id);
+      alert("✅ Formulario enviado a la papelera");
+      cargarFormularios(user.id, mostrarPapelera);
     } catch (error) {
       console.error("❌ Error al eliminar:", error);
       alert("Error al eliminar el formulario");
@@ -223,7 +261,7 @@ const Home = () => {
           ? "✅ Formulario publicado correctamente"
           : "📤 Formulario despublicado"
       );
-      cargarFormularios(user.id);
+      cargarFormularios(user.id, mostrarPapelera);
     } catch (error) {
       console.error("❌ Error al cambiar estado:", error);
       alert("No se pudo actualizar el estado del formulario");
@@ -271,19 +309,31 @@ const Home = () => {
         </div>
       </header>
 
+      {/* Botones de acción general */}
+      <div className="home-actions-bar" style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 2rem', marginTop: '1rem' }}>
+        <button 
+          onClick={() => setMostrarPapelera(!mostrarPapelera)}
+          style={{ padding: '8px 16px', background: '#4f46e5', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' }}
+        >
+          {mostrarPapelera ? "⬅️ Volver a Mis Formularios" : "🗑️ Ver Papelera"}
+        </button>
+      </div>
+
       {/* Contenedor principal */}
       <div className="home-content-wrapper">
         <section className="home-grid">
-          {/* Tarjeta CREAR */}
-          <div
-            className="home-card-crear"
-            onClick={handleCrearFormulario}
-          >
-            <svg className="home-plus-icon" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-            </svg>
-            <span className="home-crear-text">CREAR</span>
-          </div>
+          {/* Tarjeta CREAR (solo si no estamos en papelera) */}
+          {!mostrarPapelera && (
+            <div
+              className="home-card-crear"
+              onClick={handleCrearFormulario}
+            >
+              <svg className="home-plus-icon" viewBox="0 0 24 24" fill="none">
+                <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+              <span className="home-crear-text">CREAR</span>
+            </div>
+          )}
 
           {/* Tarjetas de formularios */}
           {formularios.map((form) => {
@@ -296,11 +346,11 @@ const Home = () => {
               >
                 {/* Badge de estado y menú en la misma línea */}
                 <div className="home-top-bar">
-                  <div className={`home-badge ${estado === "PUBLICADO" ? "home-badge-publicado" :
+                  <div className={`home-badge ${mostrarPapelera ? "home-badge-cerrado" : estado === "PUBLICADO" ? "home-badge-publicado" :
                     estado === "BORRADOR" ? "home-badge-borrador" :
                       "home-badge-cerrado"
                     }`}>
-                    {estado}
+                    {mostrarPapelera ? "EN PAPELERA" : estado}
                   </div>
 
                   {/* Menú de 3 puntos */}
@@ -315,39 +365,59 @@ const Home = () => {
 
                     {menuAbierto === form.id && (
                       <div className="home-menu-dropdown" data-menu>
-                        <button
-                          className="home-menu-item"
-                          onClick={() => handleEliminar(form.id, form.titulo)}
-                        >
-                          🗑️ Eliminar encuesta
-                        </button>
-                        <button
-                          className="home-menu-item"
-                          onClick={() => handleDuplicar(form)}
-                        >
-                          📋 Duplicar encuesta
-                        </button>
-                        <button
-                          className="home-menu-item"
-                          onClick={() => navigate(`/form/${form.id}/stats`)}
-                        >
-                          📊 Estadísticas
-                        </button>
-                        <button
-                          className="home-menu-item"
-                          onClick={() => handleEditar(form.id)}
-                        >
-                          ✏️ Editar
-                        </button>
+                        {mostrarPapelera ? (
+                          <>
+                            <button
+                              className="home-menu-item"
+                              onClick={() => handleRestaurar(form.id, form.titulo)}
+                            >
+                              ♻️ Restaurar
+                            </button>
+                            <button
+                              className="home-menu-item"
+                              style={{ color: '#ef4444' }}
+                              onClick={() => handleEliminarDefinitivo(form.id, form.titulo)}
+                            >
+                              💥 Eliminar definitivamente
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              className="home-menu-item"
+                              onClick={() => handleEliminar(form.id, form.titulo)}
+                            >
+                              🗑️ Enviar a papelera
+                            </button>
+                            <button
+                              className="home-menu-item"
+                              onClick={() => handleDuplicar(form)}
+                            >
+                              📋 Duplicar encuesta
+                            </button>
+                            <button
+                              className="home-menu-item"
+                              onClick={() => navigate(`/form/${form.id}/stats`)}
+                            >
+                              📊 Estadísticas
+                            </button>
+                            <button
+                              className="home-menu-item"
+                              onClick={() => handleEditar(form.id)}
+                            >
+                              ✏️ Editar
+                            </button>
 
-                        {/* 🔗 NUEVA OPCIÓN DE COMPARTIR */}
-                        {obtenerEstado(form) === "PUBLICADO" && (
-                          <button
-                            className="home-menu-item"
-                            onClick={() => handleCompartir(form.id)}
-                          >
-                            📤 Compartir enlace
-                          </button>
+                            {/* 🔗 NUEVA OPCIÓN DE COMPARTIR */}
+                            {obtenerEstado(form) === "PUBLICADO" && (
+                              <button
+                                className="home-menu-item"
+                                onClick={() => handleCompartir(form.id)}
+                              >
+                                📤 Compartir enlace
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     )}
@@ -372,16 +442,18 @@ const Home = () => {
                   {form.preguntas?.length || 0} preguntas
                 </p>
 
-                {/* Botón Publicar / Despublicar */}
-                <div className="home-card-footer">
-                  <button
-                    className={`home-btn-publicar ${estado === "PUBLICADO" ? "despublicar" : "publicar"
-                      }`}
-                    onClick={() => handleTogglePublicar(form)}
-                  >
-                    {estado === "PUBLICADO" ? "Despublicar" : "Publicar"}
-                  </button>
-                </div>
+                {/* Botón Publicar / Despublicar (solo si no está en papelera) */}
+                {!mostrarPapelera && (
+                  <div className="home-card-footer">
+                    <button
+                      className={`home-btn-publicar ${estado === "PUBLICADO" ? "despublicar" : "publicar"
+                        }`}
+                      onClick={() => handleTogglePublicar(form)}
+                    >
+                      {estado === "PUBLICADO" ? "Despublicar" : "Publicar"}
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -391,7 +463,9 @@ const Home = () => {
         {formularios.length === 0 && (
           <div className="home-empty-state">
             <p className="home-empty-text">
-              No tienes formularios creados aún. ¡Crea tu primer formulario!
+              {mostrarPapelera 
+                ? "La papelera está vacía." 
+                : "No tienes formularios creados aún. ¡Crea tu primer formulario!"}
             </p>
           </div>
         )}

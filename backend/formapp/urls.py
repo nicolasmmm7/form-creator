@@ -7,14 +7,20 @@ from formapp.views import (
     FormularioAgregarUsuarioAPI,
     FormularioRemoverUsuarioAPI,
     FormularioListarUsuariosAPI,
-    EnviarInvitacionesAPI
+    EnviarInvitacionesAPI,
+    FormularioPapeleraAPI,
+    FormularioRestaurarAPI,
+    FormularioEliminarDefinitivoAPI
 )
 from responseapp.views import FormularioEstadisticasAPI, FormularioExportarAPI
 
 urlpatterns = [
     # Rutas existentes
     path('', FormularioListCreateAPI.as_view(), name='form_list_create'),
+    path('papelera/', FormularioPapeleraAPI.as_view(), name='form_papelera'),
     path('<str:id>/', FormularioDetailAPI.as_view(), name='form_detail'),
+    path('<str:id>/restaurar/', FormularioRestaurarAPI.as_view(), name='form_restaurar'),
+    path('<str:id>/eliminar-definitivo/', FormularioEliminarDefinitivoAPI.as_view(), name='form_eliminar_definitivo'),
     
     # Nuevas rutas para gestión de acceso
     path('<str:id>/verificar-acceso/', FormularioAccesoAPI.as_view(), name='form_verificar_acceso'),
